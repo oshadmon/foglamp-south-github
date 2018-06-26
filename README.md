@@ -7,23 +7,5 @@ FogLAMP is an open source platform for the **Internet of Things**, and an essent
 .
 
 # Files
-`code/generate_json_files.py` - Script to generate data from GitHub 
-`code/test_generate_json_files.py` - pytest for generate_json_files.py
-`sample/auth_pair.txt' - Authentication pair file (should be in $HOME in order to run pytest)
-`sample/*.json` - Sample JSON files for the different GitHub params
+`GitHub Data Generator` - File containing script that generates JSON from GitHub data 
 
-# Example 
-```
--- Help
-ubuntu@ubuntu:~/foglamp-south-github$ python3 code/generate_json_files.py --help
-positional arguments:
-  username              Github username
-  repo                  User's repo
-
-optional arguments:
-  -h, --help                       show this help message and exit
-  -o ORGANIZATION, --organization  Github organization
-
--- Execute 
-ubuntu@ubuntu:~/foglamp-south-github$ python3 code/generate_json_files.py user@github.com:password FogLAMP foglamp
-``` 
