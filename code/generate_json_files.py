@@ -56,7 +56,8 @@ def read_traffic(traffic:requests.models.Response=None):
    open('/tmp/github_traffic_data.json', 'w').close()
    f=open('/tmp/github_traffic_data.json', 'w')
    for key in traffic['views']: 
-      data=json.dumps({'timestamp'    : key['timestamp'], 
+      timestamp=datetime.datetime.strptime(key['timestamp'], '%Y-%m-%dT%H:%M:%SZ')
+      data=json.dumps({'timestamp'    : str(timestamp), 
                        'asset'        : 'github/traffic', 
                        'sensor_values' : {'unique' : key['uniques']}
                      })
@@ -82,7 +83,7 @@ def read_commits_timestamp(commits:requests.models.Response=None):
    timestamps={} 
    for i in range(len(commits)): 
       timestamp=commits[i]['commit']['author']['date']
-      timestamp=str(timestamp).split("T")[0]
+      timestamp=datetime.datetime.strptime(timestamp, '%Y-%m-%dT%H:%M:%SZ')
       if timestamp not in timestamps: 
          timestamps[timestamp]=0 
       timestamps[timestamp]+=1 
@@ -91,11 +92,12 @@ def read_commits_timestamp(commits:requests.models.Response=None):
    open('/tmp/github_commits_timestamp_data.json', 'w').close() 
    f=open('/tmp/github_commits_timestamp_data.json', 'w') 
    for key in timestamps: 
-      data=json.dumps({'timestamp'     : key,
+      data=json.dumps({'timestamp'     : str(key),
                        'asset'         : 'github/commits/timestamp', 
                        'sensor_values' : {'unique' : timestamps[key]}
                      })
       f.write(data)
+      f.write("\n")
    f.close()
 
 def read_commits_users(commits:requests.models.Response=None): 
@@ -127,6 +129,7 @@ def read_commits_users(commits:requests.models.Response=None):
                        'sensor_values' : {'unique' : users[key]}
                      }) 
       f.write(data)
+      f.write("\n")
    f.close() 
 
 def read_clones(clones:requests.models.Response=None): 
@@ -146,7 +149,8 @@ def read_clones(clones:requests.models.Response=None):
    open('/tmp/github_clones_data.json', 'w').close()
    f=open('/tmp/github_clones_data.json', 'w')
    for key in clones['clones']:
-      data=json.dumps({'timestamp'    : key['timestamp'],
+      timestamp=datetime.datetime.strptime(key['timestamp'], '%Y-%m-%dT%H:%M:%SZ')
+      data=json.dumps({'timestamp'    : str(key['timestamp']),
                        'asset'        : 'github/clones',
                        'sensor_values' : {'uniques' : key['uniques']}
                      })
