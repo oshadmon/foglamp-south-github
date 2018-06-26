@@ -174,11 +174,6 @@ def main():
     parser.add_argument('username', help='Github username')
     parser.add_argument('repo', help='User\'s repo', default='ALL', nargs='?')
     parser.add_argument('-o', '--organization', default=None, help='Github organization')
-    # Database connection 
-    parser.add_argument('-hp', '--host',  default='127.0.0.1:5432', help='Set database host and port [127.0.0.1:5432]', nargs='?')
-    parser.add_argument('-usr', '--db-user', default='root:""', help='Set database user and password [root:""]', nargs='?')
-    parser.add_argument('-name', '--db-name',  default='test', help='Set database where data will be stored', nargs='?')
-
     args = parser.parse_args()
 
     # Set Variables 
