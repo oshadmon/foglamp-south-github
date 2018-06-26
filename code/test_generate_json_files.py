@@ -34,8 +34,7 @@ class TestGenerateJSON:
       """
       teardown
       """
-      pass
-      #self.__clean_env()
+      self.__clean_env()
      
    def __clean_env(self): 
       """
