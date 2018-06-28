@@ -1,3 +1,10 @@
+#!/bin/user/pytest
+"""
+Name: Ori Shadmon
+Date: June 2018 
+Description: Unit-testing for for generate_json_files.py
+"""
+
 import json
 import os 
 import random
