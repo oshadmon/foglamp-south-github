@@ -27,6 +27,10 @@ def send_request(repo:str='', organization:str='', auth_pair:tuple=())->(request
    traffic_url = base_url + organization + '/' + repo + '/traffic/views'
    traffic_response = requests.get(traffic_url, auth=auth_pair)
 
+   if traffic_response.status_code != 200: 
+      print("Error %s: %s " % (traffic_response.status_code, traffic_response.json()['message']))
+      exit(1)
+
    # Commits 
    commits_url = base_url + organization + '/' + repo + '/commits' 
    commits_response = requests.get(commits_url, auth=auth_pair)
@@ -40,41 +44,43 @@ def send_request(repo:str='', organization:str='', auth_pair:tuple=())->(request
    return traffic_response, commits_response, clones_response
   
 
-def read_traffic(traffic:requests.models.Response=None): 
+def read_traffic(traffic:requests.models.Response=None, repo:str='repo_name'): 
    """
    Write daily traffic to file 
    :param: 
       traffic:requests.models.Response - Object with traffic info
+      repo:str - repository name 
    :sample: 
    {
         "timestamp"     : "2018-06-08T00:00:00Z"
-        "asset"         : "traffic"
+        "asset"         : "github/repo_name/traffic"
         "sensor_values" : {"uniques" : 18}
    }
    """
    traffic=traffic.json()
    output=[]
-   open('/tmp/github_traffic_data.json', 'w').close()
-   f=open('/tmp/github_traffic_data.json', 'w')
+   open('/tmp/github_%s_traffic_data.json' % repo, 'w').close()
+   f=open('/tmp/github_%s_traffic_data.json' % repo, 'w')
    for key in traffic['views']: 
       timestamp=datetime.datetime.strptime(key['timestamp'], '%Y-%m-%dT%H:%M:%SZ')
       data=json.dumps({'timestamp'    : str(timestamp), 
-                       'asset'        : 'github/traffic', 
+                       'asset'        : 'github/%s/traffic' % repo, 
                        'sensor_values' : {'unique' : key['uniques']}
                      })
       f.write(data)
       f.write("\n")
    f.close()
 
-def read_commits_timestamp(commits:requests.models.Response=None): 
+def read_commits_timestamp(commits:requests.models.Response=None, repo:str='repo_name'): 
    """
    Write daily commits to file - brokenup by timestamp  
    :param: 
       commits:requests.models.Response - Object with commit info
+      repo:str - repository name
    :sample: 
    {
         "timestamp"     : "2018-06-18"
-        "asset"         : "github/commits/timestamp"
+        "asset"         : "github/repo_name/commits/timestamp"
         "sensor_values" : {"uniques" : 12}
    }
    """
@@ -90,26 +96,27 @@ def read_commits_timestamp(commits:requests.models.Response=None):
       timestamps[timestamp]+=1 
 
    # Create file with JSON object based on timestamps dict 
-   open('/tmp/github_commits_timestamp_data.json', 'w').close() 
-   f=open('/tmp/github_commits_timestamp_data.json', 'w') 
+   open('/tmp/github_%s_commits_timestamp_data.json' % repo, 'w').close() 
+   f=open('/tmp/github_%s_commits_timestamp_data.json' % repo, 'w') 
    for key in timestamps: 
       data=json.dumps({'timestamp'     : str(key),
-                       'asset'         : 'github/commits/timestamp', 
+                       'asset'         : 'github/%s/commits/timestamp' % repo, 
                        'sensor_values' : {'unique' : timestamps[key]}
                      })
       f.write(data)
       f.write("\n")
    f.close()
 
-def read_commits_users(commits:requests.models.Response=None): 
+def read_commits_users(commits:requests.models.Response=None, repo:str='repo_name'): 
    """
    Write commits to file - brokenup by users 
    :param: 
       commitsrequests.models.Response=None - Object with commit info
+      repo:str - repository name
    :sample: 
    {
         "timestamp"     : "2018-06-21 15:30:09.537268"
-        "asset"         : "github/commits/users/Ivan_Zoratti"
+        "asset"         : "github/repo_name/commits/users/Ivan_Zoratti"
         "sensor_values" : {"unique" : 2}
    }
    """
@@ -122,37 +129,38 @@ def read_commits_users(commits:requests.models.Response=None):
       users[user]+=1
 
    # Create file with JSON objects based on users dict
-   open('/tmp/github_commits_user_data.json', 'w').close() 
-   f=open('/tmp/github_commits_user_data.json', 'w')
+   open('/tmp/github_%s_commits_user_data.json' % repo, 'w').close() 
+   f=open('/tmp/github_%s_commits_user_data.json' % repo, 'w')
    for key in users: 
       data=json.dumps({'timestamp'     : str(datetime.datetime.now()), 
-                       'asset'         : 'github/commits/users/%s' % key.replace(' ','-').replace('_', '-'),
+                       'asset'         : 'github/%s/commits/users/%s' % (repo, key.replace(' ','-').replace('_', '-')),
                        'sensor_values' : {'unique' : users[key]}
                      }) 
       f.write(data)
       f.write("\n")
    f.close() 
 
-def read_clones(clones:requests.models.Response=None): 
+def read_clones(clones:requests.models.Response=None, repo:str='repo_name'): 
    """
    Write daily clones to file
    :param: 
       clones:requests.models.Response - Object with clones info 
+      repo:str - repository name
    :sample: 
    {
         "timestamp"     : "2018-06-08T00:00:00Z"
-        "asset"         : "traffic"
+        "asset"         : "github/repo_name/clones"
         "sensor_values" : {"uniques" : 5}
    }
    """
    clones=clones.json()
    output=[]
-   open('/tmp/github_clones_data.json', 'w').close()
-   f=open('/tmp/github_clones_data.json', 'w')
+   open('/tmp/github_%s_clones_data.json' % repo, 'w').close()
+   f=open('/tmp/github_%s_clones_data.json' % repo, 'w')
    for key in clones['clones']:
       timestamp=datetime.datetime.strptime(key['timestamp'], '%Y-%m-%dT%H:%M:%SZ')
       data=json.dumps({'timestamp'    : str(key['timestamp']),
-                       'asset'        : 'github/clones',
+                       'asset'        : 'github/%s/clones' % repo,
                        'sensor_values' : {'uniques' : key['uniques']}
                      })
       f.write(data)
@@ -194,10 +202,10 @@ def main():
 
     traffic_response, commits_response, clones_response=send_request(repo, organization, auth_pair)
 
-    read_traffic(traffic_response)
-    read_clones(clones_response)
-    read_commits_timestamp(commits_response) 
-    read_commits_users(commits_response)
+    read_traffic(traffic_response, repo)
+    read_clones(clones_response, repo)
+    read_commits_timestamp(commits_response, repo) 
+    read_commits_users(commits_response, repo)
 
 if __name__ == '__main__': 
    main()

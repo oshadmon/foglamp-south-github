@@ -22,9 +22,9 @@ class TestGenerateJSON:
          env:str - file containing authentication pair [user:password]
       """    
       # Params
-      repo='foglamp' 
-      org='FogLAMP'
-      env=os.path.expanduser(os.path.expandvars('$HOME/auth_pair.txt')) 
+      self.repo='FogLAMP' 
+      org='foglamp'
+      env=os.path.expanduser(os.path.expandvars('$HOME/auth_pair.txt')) # $HOME/auth_pair.txt needs to be set when running pytest
       with open(env, 'r') as f: 
          auth=str(f.readlines()[0])
       user=str(auth.split(':')[0])
@@ -34,14 +34,14 @@ class TestGenerateJSON:
       # Clean env 
       self.__clean_env() 
       # Prepare requests
-      self.traffic_response, self.commits_response, self.clones_response = send_request(repo, org, auth)
+      self.traffic_response, self.commits_response, self.clones_response = send_request(self.repo, org, auth)
 
 
    def teardown_method(self): 
       """
       teardown
       """
-      self.__clean_env()
+      pass #self.__clean_env()
      
    def __clean_env(self): 
       """
@@ -75,13 +75,13 @@ class TestGenerateJSON:
          2. 1-14 rows 
          3. At random check keys in json object
       """ 
-      file_check_stmt="ls /tmp/github_traffic_data.json | wc -l"
-      file_count="cat /tmp/github_traffic_data.json | wc -l" 
+      file_check_stmt="ls /tmp/github_%s_traffic_data.json | wc -l" % self.repo
+      file_count="cat /tmp/github_%s_traffic_data.json | wc -l" % self.repo
       
       # Check file gets created 
       file_check=int(os.popen(file_check_stmt).read().split("\n")[0])
       assert file_check == 0
-      read_traffic(self.traffic_response)  
+      read_traffic(self.traffic_response, self.repo)  
       file_check=int(os.popen(file_check_stmt).read().split("\n")[0])
       assert file_check == 1 
 
@@ -91,7 +91,7 @@ class TestGenerateJSON:
 
       # Get Data 
       data=[] 
-      with open('/tmp/github_traffic_data.json') as f: 
+      with open('/tmp/github_%s_traffic_data.json' % self.repo, 'r') as f: 
          for line in f.readlines():
             data.append(json.loads(line))
 
@@ -102,7 +102,7 @@ class TestGenerateJSON:
          
       # Assert that for a random JSON object value types are valid
       data_id=random.randint(0, len(data)-1) 
-      assert data[data_id]['asset'] == 'github/traffic'
+      assert data[data_id]['asset'] == 'github/%s/traffic' % self.repo
       try: 
          datetime.datetime.strptime(data[data_id]['timestamp'], '%Y-%m-%d %H:%M:%S')
       except: 
@@ -119,12 +119,12 @@ class TestGenerateJSON:
          2. Row count 
          3. At random check keys in json object
       """
-      file_check_stmt="ls /tmp/github_clones_data.json | wc -l"
-      file_count="cat /tmp/github_clones_data.json | wc -l"
+      file_check_stmt="ls /tmp/github_%s_clones_data.json | wc -l" % self.repo
+      file_count="cat /tmp/github_%s_clones_data.json | wc -l" % self.repo
 
       file_check=int(os.popen(file_check_stmt).read().split("\n")[0])
       assert file_check == 0
-      read_clones(self.clones_response)
+      read_clones(self.clones_response, self.repo)
       file_check=int(os.popen(file_check_stmt).read().split("\n")[0])
       assert file_check == 1
 
@@ -134,7 +134,7 @@ class TestGenerateJSON:
 
       # Get Data 
       data=[]
-      with open('/tmp/github_clones_data.json') as f:
+      with open('/tmp/github_%s_clones_data.json' % self.repo, 'r') as f:
          for line in f.readlines():
             data.append(json.loads(line))
 
@@ -145,7 +145,7 @@ class TestGenerateJSON:
 
       # Assert that for a random JSON object value types are valid
       data_id=random.randint(0, len(data)-1)
-      assert data[data_id]['asset'] == 'github/clones'
+      assert data[data_id]['asset'] == 'github/%s/clones' % self.repo
       try:
          datetime.datetime.strptime(data[data_id]['timestamp'], '%Y-%m-%d %H:%M:%S')
       except:
@@ -161,11 +161,12 @@ class TestGenerateJSON:
          2. Row count 
          3. At random check keys in json object 
       """
-      file_check_stmt="ls /tmp/github_commits_timestamp_data.json | wc -l"
-      file_count="cat /tmp/github_commits_timestamp_data.json | wc -l"
+      file_check_stmt="ls /tmp/github_%s_commits_timestamp_data.json | wc -l" % self.repo
+      file_count="cat /tmp/github_%s_commits_timestamp_data.json | wc -l" % self.repo
+
       file_check=int(os.popen(file_check_stmt).read().split("\n")[0])
       assert file_check == 0
-      read_commits_timestamp(self.commits_response)
+      read_commits_timestamp(self.commits_response, self.repo)
       file_check=int(os.popen(file_check_stmt).read().split("\n")[0])
       assert file_check == 1
 
@@ -174,7 +175,7 @@ class TestGenerateJSON:
       assert row_count >= 1 # Verify that clone has been done 
 
       data=[]
-      with open('/tmp/github_commits_timestamp_data.json') as f:
+      with open('/tmp/github_%s_commits_timestamp_data.json' % self.repo, 'r') as f:
          for line in f.readlines():
             data.append(json.loads(line))
 
@@ -185,7 +186,7 @@ class TestGenerateJSON:
 
       # Assert that for a random JSON object value types are valid
       data_id=random.randint(0, len(data)-1)
-      assert data[data_id]['asset'] == 'github/commits/timestamp'
+      assert data[data_id]['asset'] == 'github/%s/commits/timestamp' % self.repo
       try:
          datetime.datetime.strptime(data[data_id]['timestamp'], '%Y-%m-%d %H:%M:%S')
       except:
@@ -201,17 +202,17 @@ class TestGenerateJSON:
          2. Row Count 
          3. At random check keys in JSON object
       """
-      file_check_stmt="ls /tmp/github_commits_user_data.json | wc -l"
-      file_count="cat /tmp/github_commits_user_data.json | wc -l"
+      file_check_stmt="ls /tmp/github_%s_commits_user_data.json | wc -l" % self.repo
+      file_count="cat /tmp/github_%s_commits_user_data.json | wc -l" % self.repo
 
       file_check=int(os.popen(file_check_stmt).read().split("\n")[0])
       assert file_check == 0
-      read_commits_users(self.commits_response)
+      read_commits_users(self.commits_response, self.repo)
       file_check=int(os.popen(file_check_stmt).read().split("\n")[0])
       assert file_check == 1
 
       data=[]
-      with open('/tmp/github_commits_user_data.json') as f:
+      with open('/tmp/github_%s_commits_user_data.json' % self.repo, 'r') as f:
          for line in f.readlines():
             data.append(json.loads(line))
 
@@ -221,7 +222,7 @@ class TestGenerateJSON:
 
       # Assert that for a random JSON object value types are valid
       data_id=random.randint(0, len(data)-1)
-      assert data[data_id]['asset'] == 'github/commits/users/%s' % data[data_id]['asset'].split("/")[-1]
+      assert data[data_id]['asset'] == 'github/%s/commits/users/%s' % (self.repo, data[data_id]['asset'].split("/")[-1])
       try:
          datetime.datetime.strptime(data[data_id]['timestamp'], '%Y-%m-%d %H:%M:%S')
       except:
