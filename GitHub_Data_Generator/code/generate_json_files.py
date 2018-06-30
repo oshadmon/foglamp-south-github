@@ -10,6 +10,7 @@ import argparse
 import datetime
 import json
 import requests
+import uuid
 
 def send_request(repo:str='', organization:str='', auth_pair:tuple=())->(requests.models.Response, requests.models.Response, requests.models.Response): 
    """
@@ -52,9 +53,10 @@ def read_traffic(traffic:requests.models.Response=None, repo:str='repo_name'):
       repo:str - repository name 
    :sample: 
    {
-        "timestamp"     : "2018-06-08T00:00:00Z"
-        "asset"         : "github/repo_name/traffic"
-        "sensor_values" : {"uniques" : 18}
+        "timestamp" : "2018-06-08T00:00:00Z"
+        "key"       : "ff7a5466-7c0a-11e8-ab26-0800275d93ce"
+        "asset"     : "github/repo_name/traffic"
+        "readings"  : {"traffic"" : 18}
    }
    """
    traffic=traffic.json()
@@ -63,9 +65,10 @@ def read_traffic(traffic:requests.models.Response=None, repo:str='repo_name'):
    f=open('/tmp/github_%s_traffic_data.json' % repo, 'w')
    for key in traffic['views']: 
       timestamp=datetime.datetime.strptime(key['timestamp'], '%Y-%m-%dT%H:%M:%SZ')
-      data=json.dumps({'timestamp'    : str(timestamp), 
-                       'asset'        : 'github/%s/traffic' % repo, 
-                       'sensor_values' : {'unique' : key['uniques']}
+      data=json.dumps({'timestamp' : str(timestamp), 
+                       'key'       : str(uuid.uuid1()),
+                       'asset'     : 'github/%s/traffic' % repo, 
+                       'readings'  : {'traffic' : key['uniques']}
                      })
       f.write(data)
       f.write("\n")
@@ -79,9 +82,10 @@ def read_commits_timestamp(commits:requests.models.Response=None, repo:str='repo
       repo:str - repository name
    :sample: 
    {
-        "timestamp"     : "2018-06-18"
-        "asset"         : "github/repo_name/commits/timestamp"
-        "sensor_values" : {"uniques" : 12}
+        "timestamp" : "2018-06-18"
+        "key"       : "ff7a5466-7c0a-11e8-ab26-0800275d93ce"
+        "asset"     : "github/repo_name/commits/timestamp"
+        "readings"  : {"commits/timestamp" : 12}
    }
    """
    commits=commits.json()
@@ -99,9 +103,10 @@ def read_commits_timestamp(commits:requests.models.Response=None, repo:str='repo
    open('/tmp/github_%s_commits_timestamp_data.json' % repo, 'w').close() 
    f=open('/tmp/github_%s_commits_timestamp_data.json' % repo, 'w') 
    for key in timestamps: 
-      data=json.dumps({'timestamp'     : str(key),
-                       'asset'         : 'github/%s/commits/timestamp' % repo, 
-                       'sensor_values' : {'unique' : timestamps[key]}
+      data=json.dumps({'timestamp' : str(key),
+                       'key'       : str(uuid.uuid1()),
+                       'asset'     : 'github/%s/commits/timestamp' % repo, 
+                       'readings'  : {'commits/timestamp' : timestamps[key]}
                      })
       f.write(data)
       f.write("\n")
@@ -115,9 +120,10 @@ def read_commits_users(commits:requests.models.Response=None, repo:str='repo_nam
       repo:str - repository name
    :sample: 
    {
-        "timestamp"     : "2018-06-21 15:30:09.537268"
-        "asset"         : "github/repo_name/commits/users/Ivan_Zoratti"
-        "sensor_values" : {"unique" : 2}
+        "timestamp" : "2018-06-21 15:30:09.537268"
+        "key"       : "ff7a5466-7c0a-11e8-ab26-0800275d93ce"
+        "asset"     : "github/repo_name/commits/users/Ivan_Zoratti"
+        "readings"  : {"commits/users/Ivan_Zoratti" : 2}
    }
    """
    commits=commits.json()
@@ -131,10 +137,20 @@ def read_commits_users(commits:requests.models.Response=None, repo:str='repo_nam
    # Create file with JSON objects based on users dict
    open('/tmp/github_%s_commits_user_data.json' % repo, 'w').close() 
    f=open('/tmp/github_%s_commits_user_data.json' % repo, 'w')
+   # number of users commit  
+   data=json.dumps({'timestamp' : str(datetime.datetime.now()),    
+                    'key'       : str(uuid.uuid1()),
+                    'asset'     : 'github/%s/commits/users' % repo, 
+                    'readings'   : {'commits/users' : int(len(users))}
+                  })
+   f.write(data)
+   f.write('\n')
+   # number of commits per user 
    for key in users: 
-      data=json.dumps({'timestamp'     : str(datetime.datetime.now()), 
-                       'asset'         : 'github/%s/commits/users/%s' % (repo, key.replace(' ','-').replace('_', '-')),
-                       'sensor_values' : {'unique' : users[key]}
+      data=json.dumps({'timestamp' : str(datetime.datetime.now()), 
+                       'key'       : str(uuid.uuid1()),
+                       'asset'     : 'github/%s/commits/users/%s' % (repo, key.replace(' ','-').replace('_', '-')),
+                       'readings' : {'commits/users/%s' % key.replace(' ','-').replace('_', '-') : users[key]}
                      }) 
       f.write(data)
       f.write("\n")
@@ -148,9 +164,10 @@ def read_clones(clones:requests.models.Response=None, repo:str='repo_name'):
       repo:str - repository name
    :sample: 
    {
-        "timestamp"     : "2018-06-08T00:00:00Z"
-        "asset"         : "github/repo_name/clones"
-        "sensor_values" : {"uniques" : 5}
+        "timestamp" : "2018-06-08T00:00:00Z"
+        "key"       : "ff7a5466-7c0a-11e8-ab26-0800275d93ce"
+        "asset"     : "github/repo_name/clones"
+        "readings" : {"clones" : 5}
    }
    """
    clones=clones.json()
@@ -159,9 +176,10 @@ def read_clones(clones:requests.models.Response=None, repo:str='repo_name'):
    f=open('/tmp/github_%s_clones_data.json' % repo, 'w')
    for key in clones['clones']:
       timestamp=datetime.datetime.strptime(key['timestamp'], '%Y-%m-%dT%H:%M:%SZ')
-      data=json.dumps({'timestamp'    : str(key['timestamp']),
-                       'asset'        : 'github/%s/clones' % repo,
-                       'sensor_values' : {'uniques' : key['uniques']}
+      data=json.dumps({'timestamp' : str(key['timestamp']),
+                       'key'       : str(uuid.uuid1()),
+                       'asset'     : 'github/%s/clones' % repo,
+                       'readings'  : {'clones' : key['uniques']}
                      })
       f.write(data)
       f.write("\n")

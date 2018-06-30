@@ -96,10 +96,9 @@ class TestGenerateJSON:
             data.append(json.loads(line))
 
       # Assert keys in each data type
-      keys=['asset', 'sensor_values', 'timestamp']
+      keys=['asset', 'key', 'readings', 'timestamp']
       for group in data: 
          assert sorted(list(group.keys())) == keys # Validate keys
-         
       # Assert that for a random JSON object value types are valid
       data_id=random.randint(0, len(data)-1) 
       assert data[data_id]['asset'] == 'github/%s/traffic' % self.repo
@@ -107,8 +106,8 @@ class TestGenerateJSON:
          datetime.datetime.strptime(data[data_id]['timestamp'], '%Y-%m-%d %H:%M:%S')
       except: 
          return False
-      assert type(data[data_id]['sensor_values']) == dict 
-      assert type(data[data_id]['sensor_values']['unique']) == int
+      assert type(data[data_id]['readings']) == dict 
+      assert type(data[data_id]['readings']['traffic']) == int
 
 
    def test_read_clones(self): 
@@ -139,7 +138,7 @@ class TestGenerateJSON:
             data.append(json.loads(line))
 
       # Assert keys in each data type
-      keys=['asset', 'sensor_values', 'timestamp']
+      keys=['asset', 'key', 'readings', 'timestamp']
       for group in data:
          assert sorted(list(group.keys())) == keys # Validate keys
 
@@ -150,8 +149,8 @@ class TestGenerateJSON:
          datetime.datetime.strptime(data[data_id]['timestamp'], '%Y-%m-%d %H:%M:%S')
       except:
          return False
-      assert type(data[data_id]['sensor_values']) == dict
-      assert type(data[data_id]['sensor_values']['unique']) == int
+      assert type(data[data_id]['readings']) == dict
+      assert type(data[data_id]['readings']['clones']) == int
 
    def test_read_commits_timestamp(self): 
       """
@@ -180,7 +179,7 @@ class TestGenerateJSON:
             data.append(json.loads(line))
 
       # Assert keys in each data type
-      keys=['asset', 'sensor_values', 'timestamp']
+      keys=['asset', 'key', 'readings', 'timestamp']
       for group in data:
          assert sorted(list(group.keys())) == keys # Validate keys
 
@@ -191,8 +190,8 @@ class TestGenerateJSON:
          datetime.datetime.strptime(data[data_id]['timestamp'], '%Y-%m-%d %H:%M:%S')
       except:
          return False
-      assert type(data[data_id]['sensor_values']) == dict
-      assert type(data[data_id]['sensor_values']['unique']) == int
+      assert type(data[data_id]['readings']) == dict
+      assert type(data[data_id]['readings']['commits/timestamp']) == int
 
    def test_read_commits_users(self):
       """
@@ -216,7 +215,7 @@ class TestGenerateJSON:
          for line in f.readlines():
             data.append(json.loads(line))
 
-      keys=['asset', 'sensor_values', 'timestamp']
+      keys=['asset', 'key', 'readings', 'timestamp']
       for group in data:
          assert sorted(list(group.keys())) == keys # Validate keys
 
@@ -227,5 +226,4 @@ class TestGenerateJSON:
          datetime.datetime.strptime(data[data_id]['timestamp'], '%Y-%m-%d %H:%M:%S')
       except:
          return False
-      assert type(data[data_id]['sensor_values']) == dict
-      assert type(data[data_id]['sensor_values']['unique']) == int
+      assert type(data[data_id]['readings']) == dict
