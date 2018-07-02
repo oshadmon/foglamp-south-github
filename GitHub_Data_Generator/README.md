@@ -1,6 +1,5 @@
-# foglamp-south-github
+# Description
 Based on [github-traffic-stats](https://github.com/nchah/github-traffic-stats), the script inserts GitHub data into [FogLAMP](https://github.com/foglamp/FogLAMP). 
-
 
 # Files
 `code/generate_json_files.py` - Script to generate data from GitHub 
@@ -10,6 +9,7 @@ Based on [github-traffic-stats](https://github.com/nchah/github-traffic-stats), 
 
 # Example 
 ```
+# Generate JSON data 
 -- Help
 ubuntu@ubuntu:~/foglamp-south-github$ python3 code/generate_json_files.py --help
 positional arguments:
@@ -21,5 +21,7 @@ optional arguments:
   -o ORGANIZATION, --organization  Github organization
 
 -- Execute 
-ubuntu@ubuntu:~/foglamp-south-github$ python3 code/generate_json_files.py user@github.com:password FogLAMP foglamp
+ubuntu@ubuntu:~/foglamp-south-github$ python3 GitHub_Data_Generator/code/generate_json_files.py user@github.com:password FogLAMP foglamp
+-- Pytest (Need to sample/auth_pair.txt prior to running) 
+ubuntu@ubuntu:~/foglamp-south-github$ pytest GitHub_Data_Generator/code/test_generate_json_files.py 
 ``` 
