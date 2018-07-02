@@ -24,7 +24,8 @@ class TestGenerateJSON:
       # Params
       self.repo='FogLAMP' 
       org='foglamp'
-      env=os.path.expanduser(os.path.expandvars('$HOME/auth_pair.txt')) # $HOME/auth_pair.txt needs to be set when running pytest
+      # Need to update '$HOME/foglamp-south-plugin/GitHub_Data_Generator/sample/auth_pair.txt' in order for tests to succeed
+      env=os.path.expanduser(os.path.expandvars('$HOME/foglamp-south-plugin/GitHub_Data_Generator/sample/auth_pair.txt')) 
       with open(env, 'r') as f: 
          auth=str(f.readlines()[0])
       user=str(auth.split(':')[0])
@@ -35,7 +36,7 @@ class TestGenerateJSON:
       self.__clean_env() 
       # Prepare requests
       self.traffic_response, self.commits_response, self.clones_response = send_request(self.repo, org, auth)
-
+         
 
    def teardown_method(self): 
       """
