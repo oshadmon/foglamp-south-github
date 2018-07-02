@@ -13,15 +13,9 @@ Based on [github-traffic-stats](https://github.com/nchah/github-traffic-stats), 
 -- Help
 ubuntu@ubuntu:~/foglamp-south-github$ python3 code/generate_json_files.py --help
 positional arguments:
-  username              Github username
-  repo                  User's repo
-
-optional arguments:
-  -h, --help                       show this help message and exit
-  -o ORGANIZATION, --organization  Github organization
-
+   auth_file   authentication file
 -- Execute 
-ubuntu@ubuntu:~/foglamp-south-github$ python3 GitHub_Data_Generator/code/generate_json_files.py user@github.com:password FogLAMP foglamp
+ubuntu@ubuntu:~/foglamp-south-github$ python3 GitHub_Data_Generator/code/generate_json_files.py $HOME/foglamp-south-plugin/GitHub_Data_Generator/other/auth_pair.txt
 -- Pytest (Need to sample/auth_pair.txt prior to running) 
 ubuntu@ubuntu:~/foglamp-south-github$ pytest GitHub_Data_Generator/code/test_generate_json_files.py 
 ``` 

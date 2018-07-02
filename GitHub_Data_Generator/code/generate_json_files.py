@@ -9,6 +9,7 @@ Description: The following code takes GitHub connection info, and generates traf
 import argparse
 import datetime
 import json
+import os
 import requests
 import uuid
 
@@ -190,35 +191,19 @@ def main():
     """
     Main
     :positional arguments:
-       username              Github username
-       repo                  User's repo
-
-    :optional arguments:
-       -h, --help            show this help message and exit
-       -o ORGANIZATION, --organization ORGANIZATION Github organization
+        auth_file   authentication file
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument('username', help='Github username')
-    parser.add_argument('repo', help='User\'s repo', default='ALL', nargs='?')
-    parser.add_argument('-o', '--organization', default=None, help='Github organization')
+    parser.add_argument('auth_file', default='$HOME/foglamp-south-plugin/GitHub_Data_Generator/other/auth_pair.txt', help='authentication file')
     args = parser.parse_args()
+    env=os.path.expanduser(os.path.expandvars(args.auth_file))
+    with open(env, 'r') as f:
+       output=f.read().replace('\n','').split(' ')
+    auth=(str(output[0].split(':')[0]), str(output[0].split(':')[-1]))
+    repo=output[1]
+    org=output[2]
 
-    # Set Variables 
-    str = args.username.strip()
-    sub = str.split(':', 1 )
-    len_sub = len(sub)
-    username = sub[0].strip()
-    if len_sub > 1:
-        pw = sub[1].strip()
-    else:
-        pw = getpass.getpass('Password:')
-    auth_pair = (username, pw)
-    repo = args.repo.strip()
-    organization = username
-    if args.organization != None:
-       organization = args.organization.strip()
-
-    traffic_response, commits_response, clones_response=send_request(repo, organization, auth_pair)
+    traffic_response, commits_response, clones_response=send_request(repo, org, auth)
 
     read_traffic(traffic_response, repo)
     read_clones(clones_response, repo)
