@@ -1,0 +1,1 @@
+user@github.com:password repo-name org-name
