@@ -4,13 +4,14 @@ Name: Ori Shadmon
 Date: June 2018 
 Description: Unit-testing for for generate_json_files.py
 """
-
+import argparse
 import json
 import os 
 import random
 import requests
 from generate_json_files import send_request, read_traffic, read_clones, read_commits_timestamp, read_commits_users
 
+   
 class TestGenerateJSON: 
    def setup_method(self): 
       """
@@ -21,28 +22,24 @@ class TestGenerateJSON:
          auth:str - authentication pair
          env:str - file containing authentication pair [user:password]
       """    
-      # Params
-      self.repo='FogLAMP' 
-      org='foglamp'
-      # Need to update '$HOME/foglamp-south-plugin/GitHub_Data_Generator/sample/auth_pair.txt' in order for tests to succeed
-      env=os.path.expanduser(os.path.expandvars('$HOME/foglamp-south-plugin/GitHub_Data_Generator/sample/auth_pair.txt')) 
-      with open(env, 'r') as f: 
-         auth=str(f.readlines()[0])
-      user=str(auth.split(':')[0])
-      passwd=str(auth.split(':')[-1].split("\n")[0])
-      auth=(user, passwd) 
+      # In order for tests to run, update '$HOME/foglamp-south-plugin/GitHub_Data_Generator/other/auth_pair.txt' with appropraite params  
+      env=os.path.expanduser(os.path.expandvars('$HOME/foglamp-south-plugin/GitHub_Data_Generator/other/auth_pair.txt'))
+      with open(env, 'r') as f:
+         output=f.read().replace('\n','').split(' ')
+      self.auth=(str(output[0].split(':')[0]), str(output[0].split(':')[-1]))
+      self.repo=output[1]
+      self.org=output[2]
 
       # Clean env 
       self.__clean_env() 
       # Prepare requests
-      self.traffic_response, self.commits_response, self.clones_response = send_request(self.repo, org, auth)
-         
+      self.traffic_response, self.commits_response, self.clones_response = send_request(self.repo, self.org, self.auth)
 
    def teardown_method(self): 
       """
       teardown
       """
-      pass #self.__clean_env()
+      self.__clean_env()
      
    def __clean_env(self): 
       """
