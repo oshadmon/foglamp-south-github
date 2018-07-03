@@ -11,3 +11,5 @@ The following scripts take data from different components (such as _GitHub_ and 
 
 `System_Data` - The following utilizes `psutil` to get CPU, Memory, and Disk matrix regarding the FogLAMP env. 
 
+`Google_Analytics-data` - The following is intened to use the Google Analytics API in order to retrieve visitor counts, and store it into JSON files
+
