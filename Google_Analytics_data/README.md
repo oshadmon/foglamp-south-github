@@ -1,6 +1,8 @@
 # Description
 The following retrieves data from Google Analytics, and storing it in JSON file(s).
 
+Code is incomplete
+
 # Files 
 - `code/authenticate_google.py` - Authenticate connection to Google Analytics. Code is originally from [google-api-python-client/hello_analytics_api_v3.py](https://github.com/google/google-api-python-client/blob/master/samples/analytics/hello_analytics_api_v3.py)
 
