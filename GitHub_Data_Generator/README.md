@@ -2,7 +2,7 @@
 Based on [github-traffic-stats](https://github.com/nchah/github-traffic-stats), the script inserts GitHub data into [FogLAMP](https://github.com/foglamp/FogLAMP). 
 
 # Files
-`code/generate_json_files.py` - Script to generate data from GitHub 
+`code/generate_json_files.py` - Script to generate data from GitHub, and stores results under `/tmp/github_*.json`. 
 `code/test_generate_json_files.py` - pytest for generate_json_files.py
 `other/auth_pair.txt' - Authentication pair file should contain GitHub access and repo/org you want to run against
 `sample/*.json` - Sample JSON files for the different GitHub params
