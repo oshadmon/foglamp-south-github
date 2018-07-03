@@ -88,12 +88,11 @@ class TestSystemData:
       else: 
          assert result['warning'] == False 
 
-   def test_process(self): 
+   def test_get_data(self): 
       """
-      Test process from generating data to sending it into file
+      Test get_data
       :assert: 
-         1. get_data() - Data types returned are valid
-         2. create_json() - Data inserted into JSON 
+         Data types returned are valid
       """    
       timestamp, cpu_data, mem_data, disk_data = get_data() 
       assert type(timestamp) == datetime.datetime 
@@ -101,15 +100,21 @@ class TestSystemData:
       assert type(mem_data) == dict 
       assert type(disk_data) == dict 
 
+   def test_create_json(self): 
+      """
+      Test create_json
+      :assert: 
+         1. Data types and format  
+         2. Values 
+      """
+      timestamp, cpu_data, mem_data, disk_data = get_data()
+
+      # Data type & format 
       json_objects=create_json(timestamp, cpu_data, 'cpu')
       result=json.loads(json_objects)     
       assert sorted(list(result.keys())) == ['asset', 'key', 'readings', 'timestamp']
       assert result['asset'] == 'system/cpu' 
       assert type(result['readings']) == dict 
-
-      actual=result['readings']
-      for key in ['cpu_0', 'idle', 'iowait', 'system']:
-         assert actual[key] == cpu_data[key]
       try:  
          uuid.UUID(result['key'])
       except: 
@@ -121,6 +126,13 @@ class TestSystemData:
       except:
          return False
       return True
+
+      # Values 
+      assert str(result['timestamp']) == str(timestamp) 
+      assert result['asset'] == 'system/cpu' 
+      actual=result['readings']
+      for key in ['cpu_0', 'idle', 'iowait', 'system']:
+         assert actual[key] == cpu_data[key]
 
    def test_main(self): 
       """
