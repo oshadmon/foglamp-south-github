@@ -14,8 +14,8 @@ Code is incomplete
 - Install [Google API Python Client](https://github.com/google/google-api-python-client) - `pip install --upgrade google-api-python-client`
 
 - In [Google API Console](https://console.developers.google.com/) do the following
-   1) Enable [Google Analytics](https://console.developers.google.com/apis/library/analyticsreporting.googleapis.com?q=Google%20Analytics&id=a6268697-60ed-41f3-afb3-5305fbcced6b&project=steel-math-209022)) 
-   2) In [Credentials](https://console.developers.google.com/apis/credentials) create a OAuth 2.0 credential 
+   1) Enable [Google Analytics](https://console.developers.google.com/apis/library/analyticsreporting.googleapis.com?q=Google%20Analytics&id=a6268697-60ed-41f3-afb3-5305fbcced6b&project=steel-math-209022) 
+   2) In [Credentials](https://console.developers.google.com/apis/credentials) create a OAuth 2.0 credential (client_secrets.json file)
 
 - Download credentials 
 
