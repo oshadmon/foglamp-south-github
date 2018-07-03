@@ -9,5 +9,5 @@ The following scripts take data from different components (such as _GitHub_ and 
 # Files
 `GitHub_Data_Generator` - The following is based on [github-traffic-stats](https://github.com/nchah/github-traffic-stats), retrieving data from GitHub and send it to FogLAMP. 
 
-`System_Data` - The following utilizes `psutil` to get CPU, Memory, and Disk matrix regarding the FogLAMP env. The results of these matrices are stored under `/tmp/system_data_*.json`
+`System_Data` - The following utilizes `psutil` to get CPU, Memory, and Disk matrix regarding the FogLAMP env. 
 
