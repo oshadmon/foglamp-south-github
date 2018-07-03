@@ -54,7 +54,10 @@ def mem_insight(que:queue.Queue=None)->dict:
    """
    mem=psutil.virtual_memory()
    percent=mem.percent
-   que.put({'percent': percent})
+   warning=False 
+   if percent > 90: 
+      warning=True 
+   que.put({'percent': percent, 'warning': warning})
 
 def disk_insight(que:queue.Queue=None)->dict:
    """

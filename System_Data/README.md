@@ -4,6 +4,8 @@ Retrive CPU, Memory, and Disk data and stores it into /tmp/system_data.json as J
 # Files 
 `code/generate_system_data.py` - Generate data and store it into JSON file (under `/tmp`)
 
+`code/test_generate_system_data.py` - pytest for `generate_system_data.py`
+
 `sample/*.json` - JSON file with sample data 
 
 # Example 
