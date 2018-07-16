@@ -1,1 +1,1 @@
-user@github.com:password repo-name org-name
+user@github.com:password repo-name org-name /tmp
