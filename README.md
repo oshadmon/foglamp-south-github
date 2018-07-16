@@ -7,9 +7,8 @@ The following scripts take data from different components (such as _GitHub_ and 
 .
 
 # Files
+This version of the code sends data to JSON files 
+
 `GitHub_Data_Generator` - The following is based on [github-traffic-stats](https://github.com/nchah/github-traffic-stats), retrieving data from GitHub and send it to FogLAMP. 
 
 `System_Data` - The following utilizes `psutil` to get CPU, Memory, and Disk matrix regarding the FogLAMP env. 
-
-`Google_Analytics-data` - The following is intened to use the Google Analytics API in order to retrieve visitor counts, and store it into JSON files
-
