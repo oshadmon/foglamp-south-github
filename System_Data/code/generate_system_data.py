@@ -3,8 +3,10 @@ Name: Ori Shadmon
 Date: July 2018
 Description: Retrieve system insight and store it into JSON file 
 """ 
+import argparse
 import datetime 
 import json
+import os
 import platform
 import psutil
 import queue
@@ -119,16 +121,17 @@ def create_json(timestamp:datetime.datetime=datetime.datetime.now(), data:dict={
                        })
    return json_data
 
-def write_to_file(timestamp:datetime.datetime=datetime.datetime.now(), cpu_data:str={"":""}, mem_data:str={"":""}, disk_data:str={"":""}): 
+def write_to_file(env:str='/tmp', timestamp:datetime.datetime=datetime.datetime.now(), cpu_data:str={"":""}, mem_data:str={"":""}, disk_data:str={"":""}): 
    """
    Write JSON data into /tmp/system_data.json 
    :args:
+      env:str - directory storing data in 
       timestamp:datetime.datetime - time data was generated 
       cpu_data:str - JSON object with CPU insight 
       mem_data:str - JSON object with memory insight 
       disk_data:str - JSON object with disk insight
    """
-   file_name='/tmp/system_data_%s.json' % timestamp.strftime('%Y_%m_%d_%H_%M_%S')
+   file_name=env+'/system_data_%s.json' % timestamp.strftime('%Y_%m_%d_%H_%M_%S')
    open(file_name, 'w').close()
    f=open(file_name, 'w') 
    f.write(cpu_data)
@@ -137,12 +140,17 @@ def write_to_file(timestamp:datetime.datetime=datetime.datetime.now(), cpu_data:
    f.close()
 
 def main(): 
+   parser = argparse.ArgumentParser()
+   parser.add_argument('data_dir', default='/tmp', help='dir to store results')
+   args = parser.parse_args()
+   env=os.path.expanduser(os.path.expandvars(args.data_dir)) 
+
    timestamp, cpu_data, mem_data, disk_data=get_data() 
    cpu_data=create_json(timestamp, cpu_data, 'cpu') 
    mem_data=create_json(timestamp, mem_data, 'memory')
    disk_data=create_json(timestamp, disk_data, 'disk')
 
-   write_to_file(timestamp, cpu_data, mem_data, disk_data)
+   write_to_file(env, timestamp, cpu_data, mem_data, disk_data)
 
 if __name__ == '__main__': 
    main() 
