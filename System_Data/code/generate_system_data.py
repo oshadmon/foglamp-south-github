@@ -77,7 +77,18 @@ def disk_insight(que:queue.Queue=None)->dict:
 
    que.put({'useage': useage, 'warning': warning, 'read': read_count, 'write': write_count}) 
 
-def get_data()->(str, dict, dict, dict): 
+def battery_precent(que:queue.Queue=None)->dict: 
+   """
+   Get Battery precent and status
+   :return: 
+      dict with battery info - precent, and whether plugged-in
+   """
+   battery = psutil.sensors_battery()
+   plugged = battery.power_plugged
+   percent = battery.percent
+   que.put({'precent': percent, 'plugged': plugged})
+
+def get_data()->(str, dict, dict, dict, dict): 
    """
    In parallel get insight regarding machine
    :return: 
@@ -87,11 +98,13 @@ def get_data()->(str, dict, dict, dict):
    cpu_que=queue.Queue()
    mem_que=queue.Queue() 
    disk_que=queue.Queue()
+   battery=queue.Queue()
 
    threads=[threading.Thread(target=get_timestamp,    args=(timestamp_que,)), 
             threading.Thread(target=cpu_insight,      args=(cpu_que,)), 
             threading.Thread(target=mem_insight,      args=(mem_que,)),
-            threading.Thread(target=disk_insight,     args=(disk_que,))
+            threading.Thread(target=disk_insight,     args=(disk_que,)),
+            threading.Thread(target=battery_precent,  args=(battery,))
            ]
 
    for thread in threads: 
@@ -102,7 +115,8 @@ def get_data()->(str, dict, dict, dict):
    cpu_data=cpu_que.get() 
    mem_data=mem_que.get() 
    disk_data=disk_que.get() 
-   return timestamp, cpu_data, mem_data, disk_data
+   battery_data=battery.get()
+   return timestamp, cpu_data, mem_data, disk_data, battery_data
 
 def create_json(timestamp:datetime.datetime=datetime.datetime.now(), data:dict={}, asset:str='cpu')->str:
    """
@@ -121,7 +135,8 @@ def create_json(timestamp:datetime.datetime=datetime.datetime.now(), data:dict={
                        })
    return json_data
 
-def write_to_file(env:str='/tmp', timestamp:datetime.datetime=datetime.datetime.now(), cpu_data:str={"":""}, mem_data:str={"":""}, disk_data:str={"":""}): 
+def write_to_file(env:str='/tmp', timestamp:datetime.datetime=datetime.datetime.now(), cpu_data:str={"":""}, 
+                  mem_data:str={"":""}, disk_data:str={"":""}, battery_data:str={"":""}): 
    """
    Write JSON data into /tmp/system_data.json 
    :args:
@@ -130,6 +145,7 @@ def write_to_file(env:str='/tmp', timestamp:datetime.datetime=datetime.datetime.
       cpu_data:str - JSON object with CPU insight 
       mem_data:str - JSON object with memory insight 
       disk_data:str - JSON object with disk insight
+      battery_data:str - JSON object with battery insight
    """
    file_name=env+'/system_data_%s.json' % timestamp.strftime('%Y_%m_%d_%H_%M_%S')
    open(file_name, 'w').close()
@@ -137,6 +153,7 @@ def write_to_file(env:str='/tmp', timestamp:datetime.datetime=datetime.datetime.
    f.write(cpu_data)
    f.write(mem_data)
    f.write(disk_data)
+   f.write(battery_data)
    f.close()
 
 def main(): 
@@ -145,12 +162,13 @@ def main():
    args = parser.parse_args()
    env=os.path.expanduser(os.path.expandvars(args.data_dir)) 
 
-   timestamp, cpu_data, mem_data, disk_data=get_data() 
+   timestamp, cpu_data, mem_data, disk_data, battery_data=get_data() 
    cpu_data=create_json(timestamp, cpu_data, 'cpu') 
    mem_data=create_json(timestamp, mem_data, 'memory')
    disk_data=create_json(timestamp, disk_data, 'disk')
+   battery_data=create_json(timestamp, battery_data, 'battery')
 
-   write_to_file(env, timestamp, cpu_data, mem_data, disk_data)
+   write_to_file(env, timestamp, cpu_data, mem_data, disk_data, battery_data)
 
 if __name__ == '__main__': 
    main() 
