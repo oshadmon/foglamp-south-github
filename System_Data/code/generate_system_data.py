@@ -171,13 +171,16 @@ def main():
    parser.add_argument('port', default=6683, help='FogLAMP POST Port')
    args = parser.parse_args()
 
+   # Raw data 
    timestamp, cpu_data, mem_data, disk_data, battery_data=get_data() 
-
+  
+   # Prepare Data  
    cpu_data=create_json(timestamp, cpu_data, 'cpu') 
    mem_data=create_json(timestamp, mem_data, 'memory')
    disk_data=create_json(timestamp, disk_data, 'disk')
    battery_data=create_json(timestamp, battery_data, 'battery')
    
+   # Send to FogLAMP
    loop = asyncio.get_event_loop()
    loop.run_until_complete(send_to_foglamp(cpu_data, args.host, args.port))
    loop.run_until_complete(send_to_foglamp(mem_data, args.host, args.port))
