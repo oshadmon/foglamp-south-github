@@ -143,8 +143,8 @@ def write_to_file(file_name:str='/tmp/data.json', data:dict={}):
       data:dict - Dictionary with data
    """
    with open(file_name, 'a') as f: 
-      #f.write('\n')
       f.write(json.dumps(data)) 
+      f.write('\n')
 
 def main(): 
    """
@@ -173,6 +173,5 @@ def main():
    write_to_file(file_name, disk_data)
    write_to_file(file_name, battery_data)
    
-
 if __name__ == '__main__': 
    main() 
