@@ -3,16 +3,25 @@ Name: Ori Shadmon
 Date: July 2018
 Description: Retrieve system insight and store it into JSON file 
 """ 
+import aiohttp
 import argparse
+import asyncio
 import datetime 
 import json
 import os
 import platform
 import psutil
 import queue
+import sys
 import time 
 import threading
 import uuid
+
+# Process to import files from FogLAMP repo
+# Requires FogLAMP to be downloaded into $HOME (git clone https://github.com/foglamp/FogLAMP.git) 
+env=os.path.expanduser(os.path.expandvars('$HOME/FogLAMP'))
+sys.path.insert(0, env)
+from python.foglamp.services.south import exceptions
 
 def get_timestamp(que:queue.Queue=None)->str: 
    """
@@ -56,9 +65,9 @@ def mem_insight(que:queue.Queue=None)->dict:
    """
    mem=psutil.virtual_memory()
    percent=mem.percent
-   warning=False 
+   warning=0 
    if percent > 90: 
-      warning=True 
+      warning=1 
    que.put({'percent': percent, 'warning': warning})
 
 def disk_insight(que:queue.Queue=None)->dict:
@@ -68,9 +77,9 @@ def disk_insight(que:queue.Queue=None)->dict:
       dict with Disk info - useage, I/O
    """ 
    useage=psutil.disk_usage('/')[3] 
-   warning=False
+   warning=0
    if useage > 75.55: #warning enabled when disk utilizes more than 75% of data
-      warning=True 
+      warning=1
    output=psutil.disk_io_counters() 
    read_count=output.read_count 
    write_count=output.write_count
@@ -85,6 +94,10 @@ def battery_precent(que:queue.Queue=None)->dict:
    """
    battery = psutil.sensors_battery()
    plugged = battery.power_plugged
+   if plugged is True: 
+      plugged=1
+   else: 
+      plugged=0
    percent = battery.percent
    que.put({'precent': percent, 'plugged': plugged})
 
@@ -118,7 +131,7 @@ def get_data()->(str, dict, dict, dict, dict):
    battery_data=battery.get()
    return timestamp, cpu_data, mem_data, disk_data, battery_data
 
-def create_json(timestamp:datetime.datetime=datetime.datetime.now(), data:dict={}, asset:str='cpu')->str:
+def create_json(timestamp:datetime.datetime=datetime.datetime.now(), data:dict={}, asset:str='cpu')->dict:
    """
    Generate JSON from info 
    :args: 
@@ -126,14 +139,13 @@ def create_json(timestamp:datetime.datetime=datetime.datetime.now(), data:dict={
       data:dict - dictionary with data for a given asset 
       asset:dict - info provided 
    :return: 
-      JSON object to store in file
+      JSON object (as dict) to store in file
    """
-   json_data=json.dumps({'timestamp': str(timestamp), 
-                         'key':       str(uuid.uuid1()), 
-                         'asset':     'system/%s' % asset, 
-                         'readings':   data
-                       })
-   return json_data
+   return {'timestamp': str(timestamp), 
+           'key':       str(uuid.uuid1()), 
+           'asset':    'system_%s' % asset, 
+           'readings':   data
+          }
 
 def write_to_file(env:str='/tmp', timestamp:datetime.datetime=datetime.datetime.now(), cpu_data:str={"":""}, 
                   mem_data:str={"":""}, disk_data:str={"":""}, battery_data:str={"":""}): 
@@ -156,19 +168,47 @@ def write_to_file(env:str='/tmp', timestamp:datetime.datetime=datetime.datetime.
    f.write(battery_data)
    f.close()
 
+async def send_to_foglamp(payload:dict={}, arg_host:str='localhost', arg_port:int=6683):
+    """
+    POST request to:
+     localhost
+     port 5683 (official IANA assigned CoAP port),
+     URI "/other/sensor-values".
+    """
+    headers = {'content-type': 'application/json'}
+    url = 'http://{}:{}/sensor-reading'.format(arg_host, arg_port)
+    async with aiohttp.ClientSession() as session:
+       async with session.post(url, data=json.dumps(payload), headers=headers) as resp:
+          print(resp.text())
+          await resp.text()
+          status_code = resp.status
+          print(status_code) 
+          if status_code in range(400, 500):
+             print("Bad request error | code:{}, reason: {}".format(status_code, resp.reason))
+             return False
+          if status_code in range(500, 600):
+             print("Server error | code:{}, reason: {}".format(status_code, resp.reason))
+             return False
+          return True
+
+    
 def main(): 
    parser = argparse.ArgumentParser()
-   parser.add_argument('data_dir', default='/tmp', help='dir to store results')
+   parser.add_argument('host', default='localhost', help='FogLAMP POST Host') 
+   parser.add_argument('port', default=6683, help='FogLAMP POST Port')
    args = parser.parse_args()
-   env=os.path.expanduser(os.path.expandvars(args.data_dir)) 
 
+   loop = asyncio.get_event_loop()
    timestamp, cpu_data, mem_data, disk_data, battery_data=get_data() 
-   cpu_data=create_json(timestamp, cpu_data, 'cpu') 
-   mem_data=create_json(timestamp, mem_data, 'memory')
-   disk_data=create_json(timestamp, disk_data, 'disk')
-   battery_data=create_json(timestamp, battery_data, 'battery')
 
-   write_to_file(env, timestamp, cpu_data, mem_data, disk_data, battery_data)
+   cpu_data=create_json(timestamp, cpu_data, 'cpu') 
+   loop.run_until_complete(send_to_foglamp(cpu_data))
+   #mem_data=create_json(timestamp, mem_data, 'memory')
+   #disk_data=create_json(timestamp, disk_data, 'disk')
+   #battery_data=create_json(timestamp, battery_data, 'battery')
+
+   #write_to_file(env, timestamp, cpu_data, mem_data, disk_data, battery_data)
+   
 
 if __name__ == '__main__': 
    main() 
