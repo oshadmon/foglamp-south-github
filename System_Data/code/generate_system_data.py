@@ -147,67 +147,51 @@ def create_json(timestamp:datetime.datetime=datetime.datetime.now(), data:dict={
            'readings':   data
           }
 
-def write_to_file(env:str='/tmp', timestamp:datetime.datetime=datetime.datetime.now(), cpu_data:str={"":""}, 
-                  mem_data:str={"":""}, disk_data:str={"":""}, battery_data:str={"":""}): 
-   """
-   Write JSON data into /tmp/system_data.json 
-   :args:
-      env:str - directory storing data in 
-      timestamp:datetime.datetime - time data was generated 
-      cpu_data:str - JSON object with CPU insight 
-      mem_data:str - JSON object with memory insight 
-      disk_data:str - JSON object with disk insight
-      battery_data:str - JSON object with battery insight
-   """
-   file_name=env+'/system_data_%s.json' % timestamp.strftime('%Y_%m_%d_%H_%M_%S')
-   open(file_name, 'w').close()
-   f=open(file_name, 'w') 
-   f.write(cpu_data)
-   f.write(mem_data)
-   f.write(disk_data)
-   f.write(battery_data)
-   f.close()
-
 async def send_to_foglamp(payload:dict={}, arg_host:str='localhost', arg_port:int=6683):
     """
-    POST request to:
-     localhost
-     port 5683 (official IANA assigned CoAP port),
-     URI "/other/sensor-values".
+    POST to FogLAMP using HTTP 
+    :args: 
+       payload:dict - Dictionary with data 
+       arg_host:str - FogLAMP Host 
+       arg_port:int - FogLAMP POST port 
     """
     headers = {'content-type': 'application/json'}
     url = 'http://{}:{}/sensor-reading'.format(arg_host, arg_port)
     async with aiohttp.ClientSession() as session:
        async with session.post(url, data=json.dumps(payload), headers=headers) as resp:
-          print(resp.text())
           await resp.text()
           status_code = resp.status
-          print(status_code) 
           if status_code in range(400, 500):
              print("Bad request error | code:{}, reason: {}".format(status_code, resp.reason))
-             return False
+             exit(1)
           if status_code in range(500, 600):
              print("Server error | code:{}, reason: {}".format(status_code, resp.reason))
-             return False
-          return True
+             exit(1)
 
-    
 def main(): 
+   """
+   Main for generating GitHub data and sending it to FogLAMP 
+   :arguments:
+      host        FogLAMP POST Host
+      port        FogLAMP POST Port
+   """
    parser = argparse.ArgumentParser()
    parser.add_argument('host', default='localhost', help='FogLAMP POST Host') 
    parser.add_argument('port', default=6683, help='FogLAMP POST Port')
    args = parser.parse_args()
 
-   loop = asyncio.get_event_loop()
    timestamp, cpu_data, mem_data, disk_data, battery_data=get_data() 
 
    cpu_data=create_json(timestamp, cpu_data, 'cpu') 
-   loop.run_until_complete(send_to_foglamp(cpu_data))
-   #mem_data=create_json(timestamp, mem_data, 'memory')
-   #disk_data=create_json(timestamp, disk_data, 'disk')
-   #battery_data=create_json(timestamp, battery_data, 'battery')
-
-   #write_to_file(env, timestamp, cpu_data, mem_data, disk_data, battery_data)
+   mem_data=create_json(timestamp, mem_data, 'memory')
+   disk_data=create_json(timestamp, disk_data, 'disk')
+   battery_data=create_json(timestamp, battery_data, 'battery')
+   
+   loop = asyncio.get_event_loop()
+   loop.run_until_complete(send_to_foglamp(cpu_data, args.host, args.port))
+   loop.run_until_complete(send_to_foglamp(mem_data, args.host, args.port))
+   loop.run_until_complete(send_to_foglamp(disk_data, args.host, args.port))
+   loop.run_until_complete(send_to_foglamp(battery_data, args.host, args.port))
    
 
 if __name__ == '__main__': 
