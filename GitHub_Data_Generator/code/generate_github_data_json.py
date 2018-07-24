@@ -53,7 +53,7 @@ def send_request(repo:str='', organization:str='', auth_pair:tuple=())->(request
 
 def read_traffic(traffic:requests.models.Response=None, repo:str='repo_name', json_dir:str='/tmp', timestamp:str=datetime.datetime.now().strftime('%Y_%m_%d')): 
    """
-   Write daily traffic to file 
+   Create list of JSON objects with traffic info, and write to file 
    :param: 
       traffic:requests.models.Response - Object with traffic info
       repo:str - repository name 
@@ -68,24 +68,21 @@ def read_traffic(traffic:requests.models.Response=None, repo:str='repo_name', js
    }
    """
    traffic=traffic.json()
-   output=[]
+   data=[]
    file_name=json_dir+'/'+'%s_github_%s_traffic_data.json' % (repo, timestamp)
    open(file_name, 'w').close()
-   f=open(file_name, 'w')
    for key in traffic['views']: 
       timestamp=datetime.datetime.strptime(key['timestamp'], '%Y-%m-%dT%H:%M:%SZ')
-      data=json.dumps({'timestamp' : str(timestamp), 
-                       'key'       : str(uuid.uuid1()),
-                       'asset'     : 'github/%s/traffic' % repo, 
-                       'readings'  : {'traffic' : key['uniques']}
-                     })
-      f.write(data)
-      f.write("\n")
-   f.close()
+      data.append(json.dumps({'timestamp' : str(timestamp), 
+                              'key'       : str(uuid.uuid1()),
+                              'asset'     : 'github/%s/traffic' % repo, 
+                              'readings'  : {'traffic' : key['uniques']}
+                            }))
+   write_to_file(file_name, data) 
 
 def read_commits_timestamp(commits:requests.models.Response=None, repo:str='repo_name', json_dir:str='/tmp', timestamp:str=datetime.datetime.now().strftime('%Y_%m_%d')): 
    """
-   Write daily commits to file - brokenup by timestamp  
+   Create list of JSON objects with commits (by timestamp) info, and write to file 
    :param: 
       commits:requests.models.Response - Object with commit info
       repo:str - repository name
@@ -113,20 +110,18 @@ def read_commits_timestamp(commits:requests.models.Response=None, repo:str='repo
 
    # Create file with JSON object based on timestamps dict 
    open(file_name, 'w').close()
-   f=open(file_name, 'w')
+   data=[]
    for key in timestamps: 
-      data=json.dumps({'timestamp' : str(key),
-                       'key'       : str(uuid.uuid1()),
-                       'asset'     : 'github/%s/commits/timestamp' % repo, 
-                       'readings'  : {'commits/timestamp' : timestamps[key]}
-                     })
-      f.write(data)
-      f.write("\n")
-   f.close()
+      data.append(json.dumps({'timestamp' : str(key),
+                              'key'       : str(uuid.uuid1()),
+                              'asset'     : 'github/%s/commits/timestamp' % repo, 
+                              'readings'  : {'commits/timestamp' : timestamps[key]}
+                            }))
+   write_to_file(file_name, data) 
 
 def read_commits_users(commits:requests.models.Response=None, repo:str='repo_name',  json_dir:str='/tmp', timestamp:str=datetime.datetime.now().strftime('%Y_%m_%d')): 
    """
-   Write commits to file - brokenup by users 
+   Create list of JSON objects with commits (by user) info, and write to file
    :param: 
       commitsrequests.models.Response=None - Object with commit info
       repo:str - repository name
@@ -142,6 +137,7 @@ def read_commits_users(commits:requests.models.Response=None, repo:str='repo_nam
    """
    commits=commits.json()
    users={} 
+   data=[]
    for i in range(len(commits)): 
       user=commits[i]['commit']['author']['name']
       if user not in users: 
@@ -151,29 +147,24 @@ def read_commits_users(commits:requests.models.Response=None, repo:str='repo_nam
    # Create file with JSON objects based on users dict
    file_name=json_dir+'/'+'%s_github_%s_commits_users.json' % (repo, timestamp)
    open(file_name, 'w').close()
-   f=open(file_name, 'w')
    # number of users commit  
-   data=json.dumps({'timestamp' : str(datetime.datetime.now()),    
-                    'key'       : str(uuid.uuid1()),
-                    'asset'     : 'github/%s/commits/users' % repo, 
-                    'readings'   : {'commits/users' : int(len(users))}
-                  })
-   f.write(data)
-   f.write('\n')
+   data.append(json.dumps({'timestamp' : str(datetime.datetime.now()),    
+                           'key'       : str(uuid.uuid1()),
+                           'asset'     : 'github/%s/commits/users' % repo, 
+                           'readings'   : {'commits/users' : int(len(users))}
+                         }))
    # number of commits per user 
    for key in users: 
-      data=json.dumps({'timestamp' : str(datetime.datetime.now()), 
-                       'key'       : str(uuid.uuid1()),
-                       'asset'     : 'github/%s/commits/users/%s' % (repo, key.replace(' ','-').replace('_', '-')),
-                       'readings' : {'commits/users/%s' % key.replace(' ','-').replace('_', '-') : users[key]}
-                     }) 
-      f.write(data)
-      f.write("\n")
-   f.close() 
+      data.append(json.dumps({'timestamp' : str(datetime.datetime.now()), 
+                              'key'       : str(uuid.uuid1()),
+                              'asset'     : 'github/%s/commits/users/%s' % (repo, key.replace(' ','-').replace('_', '-')),
+                              'readings' : {'commits/users/%s' % key.replace(' ','-').replace('_', '-') : users[key]}
+                            })) 
+   write_to_file(file_name, data) 
 
 def read_clones(clones:requests.models.Response=None, repo:str='repo_name', json_dir:str='/tmp', timestamp:str=datetime.datetime.now().strftime('%Y_%m_%d')): 
    """
-   Write daily clones to file
+   Create list of JSON objects with daily clones, and write to file 
    :param: 
       clones:requests.models.Response - Object with clones info 
       repo:str - repository name
@@ -188,22 +179,30 @@ def read_clones(clones:requests.models.Response=None, repo:str='repo_name', json
    }
    """
    clones=clones.json()
-   output=[]
+   data=[]
    file_name=json_dir+'/'+'%s_github_%s_clones.json' % (repo, timestamp)
    open(file_name, 'w').close()
-   f=open(file_name, 'w')
    for key in clones['clones']:
       timestamp=datetime.datetime.strptime(key['timestamp'], '%Y-%m-%dT%H:%M:%SZ')
-      data=json.dumps({'timestamp' : str(key['timestamp']),
-                       'key'       : str(uuid.uuid1()),
-                       'asset'     : 'github/%s/clones' % repo,
-                       'readings'  : {'clones' : key['uniques']}
-                     })
-      f.write(data)
-      f.write("\n")
-   f.close()
+      data.append(json.dumps({'timestamp' : str(key['timestamp']),
+                              'key'       : str(uuid.uuid1()),
+                              'asset'     : 'github/%s/clones' % repo,
+                              'readings'  : {'clones' : key['uniques']}
+                            }))
+   write_to_file(file_name, data)
 
-   
+def write_to_file(file_name:str='/tmp/data.json', data:list=[]): 
+   """
+   Write data into JSON file 
+   :args: 
+      file_name:str - File to store JSON data into 
+      data:list - list of JSON objects
+   """  
+   with open(file_name, 'w') as f: 
+      for obj in data: 
+         f.write(obj)
+         f.write('\n') 
+
 def main():
     """
     Main
