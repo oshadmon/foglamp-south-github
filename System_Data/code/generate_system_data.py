@@ -8,20 +8,11 @@ import argparse
 import asyncio
 import datetime 
 import json
-import os
-import platform
 import psutil
 import queue
-import sys
 import time 
 import threading
 import uuid
-
-# Process to import files from FogLAMP repo
-# Requires FogLAMP to be downloaded into $HOME (git clone https://github.com/foglamp/FogLAMP.git) 
-env=os.path.expanduser(os.path.expandvars('$HOME/FogLAMP'))
-sys.path.insert(0, env)
-from python.foglamp.services.south import exceptions
 
 def get_timestamp(que:queue.Queue=None)->str: 
    """
