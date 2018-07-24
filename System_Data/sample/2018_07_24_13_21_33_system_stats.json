@@ -1,0 +1,4 @@
+{"key": "28908ea6-8f7f-11e8-9a8f-0800275d93ce", "readings": {"cpu_0": 100.0, "idle": 9681.3, "iowait": 148.55, "system": 53.64}, "asset": "system_cpu", "timestamp": "2018-07-24 13:21:33.893927"}
+{"key": "28908ea7-8f7f-11e8-9a8f-0800275d93ce", "readings": {"percent": 35.2, "warning": 0}, "asset": "system_memory", "timestamp": "2018-07-24 13:21:33.893927"}
+{"key": "28908ea8-8f7f-11e8-9a8f-0800275d93ce", "readings": {"warning": 0, "useage": 30.0, "write": 599646, "read": 18618}, "asset": "system_disk", "timestamp": "2018-07-24 13:21:33.893927"}
+{"key": "28908ea9-8f7f-11e8-9a8f-0800275d93ce", "readings": {"plugged": 0, "precent": 82.0}, "asset": "system_battery", "timestamp": "2018-07-24 13:21:33.893927"}
