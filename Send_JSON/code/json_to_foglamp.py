@@ -49,6 +49,7 @@ def main():
       file_name:str - File containing JSON object(s)
       host:str - FogLAMP POST host
       port:int - FogLAMP POST port
+
    :sample JSON file - System_Data/sample/2018_07_24_13_21_33_system_stats.json: 
       {"key": "28908ea6-8f7f-11e8-9a8f-0800275d93ce", "readings": {"cpu_0": 100.0, "idle": 9681.3, "iowait": 148.55, "system": 53.64}, "asset": "system_cpu", "timestamp": "2018-07-24 13:21:33.893927"}
       {"key": "28908ea7-8f7f-11e8-9a8f-0800275d93ce", "readings": {"percent": 35.2, "warning": 0}, "asset": "system_memory", "timestamp": "2018-07-24 13:21:33.893927"}
@@ -61,19 +62,16 @@ def main():
    parser.add_argument('port', default=6683, help='FogLAMP POST Port')
    args = parser.parse_args()
 
-   # Break file 
+   # get data from file 
    data=file_to_list(args.file_name)
 
-   # Send to FogLAMP 
+   # Send to FogLAMP - if error occurs stop  
    loop = asyncio.get_event_loop()
-   outputs=[]
    for obj in data: 
       output=loop.run_until_complete(send_to_foglamp(obj, args.host, args.port))
       if output != 0: 
          print(output) 
          exit(1)
-      outputs.append(output)
-   print(outputs) 
  
 if __name__ == '__main__': 
    main()

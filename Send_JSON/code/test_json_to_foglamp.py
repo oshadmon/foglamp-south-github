@@ -23,6 +23,9 @@ class TestJSON2FogLAMP:
       time.sleep(5)
 
    def teardown_method(self): 
+      """
+      Stop and clean FogLAMP
+      """
       self.__stop_foglamp() 
       self.__reset_foglamp()
 
@@ -67,10 +70,10 @@ class TestJSON2FogLAMP:
       # Assert returned object 
       assert type(data) == list
       assert len(data) > 0
-     
+      
+      # Assert data is valid 
       for i in range(len(data)):
          payload=json.loads(data[i]) 
-         # Assert Actual data
          if payload['asset'] == 'system_cpu': 
             assert payload['key'] == '28908ea6-8f7f-11e8-9a8f-0800275d93ce' 
             assert payload['timestamp'] == '2018-07-24 13:21:33.893927'
@@ -97,8 +100,7 @@ class TestJSON2FogLAMP:
       :assert:
          1. FogLAMP is up 
          2. Data gets sent 
-         3. Something was retrieve (on FogLAMP side)
-         4. Values are correct 
+         3. Validate data
       """
       # Generate data 
       data=json_to_foglamp.file_to_list(self.file_name)
@@ -114,8 +116,9 @@ class TestJSON2FogLAMP:
          payload=data[i]
          output=loop.run_until_complete(json_to_foglamp.send_to_foglamp(payload, '127.0.0.1', 6683)) 
          assert output == 0
-
       time.sleep(5)
+
+      # Validate data 
       url='http://%s:%s/foglamp/asset'
       results=requests.get(url % ('localhost', 8081)).json() 
       for result in results: 
@@ -124,20 +127,8 @@ class TestJSON2FogLAMP:
          url='http://%s:%s/foglamp/asset/%s' 
          output=requests.get(url % ('localhost', 8081, assetCode)).json()[0]
          timestamp, readings=self.__get_data(data, assetCode)
-         '''
-         {'timestamp': '2018-07-24 13:21:33.893', 'reading': {'precent': 82.0, 'plugged': 0}}
-         {'timestamp': '2018-07-24 13:21:33.893', 'reading': {'iowait': 148.55, 'system': 53.64, 'cpu_0': 100.0, 'idle': 9681.3}}
-         {'timestamp': '2018-07-24 13:21:33.893', 'reading': {'read': 18618, 'useage': 30.0, 'warning': 0, 'write': 599646}}
-         {'timestamp': '2018-07-24 13:21:33.893', 'reading': {'percent': 35.2, 'warning': 0}}
-         '''
-         assert output['timestamp'].split(".")[0] == timestamp.split(".")[0]
+        assert output['timestamp'].split(".")[0] == timestamp.split(".")[0]
          for key in sorted(readings.keys()): 
             assert output['reading'][key] == readings[key]
             
 
-"""
-system_battery {'timestamp': '2018-07-24 13:21:33.893', 'reading': {'plugged': 0, 'precent': 82.0}}
-system_cpu {'timestamp': '2018-07-24 13:21:33.893', 'reading': {'cpu_0': 100.0, 'iowait': 148.55, 'idle': 9681.3, 'system': 53.64}}
-system_disk {'timestamp': '2018-07-24 13:21:33.893', 'reading': {'write': 599646, 'useage': 30.0, 'read': 18618, 'warning': 0}}
-system_memory {'timestamp': '2018-07-24 13:21:33.893', 'reading': {'warning': 0, 'percent': 35.2}}
-""" 
