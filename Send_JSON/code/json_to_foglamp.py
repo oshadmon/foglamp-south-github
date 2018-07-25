@@ -37,11 +37,10 @@ async def send_to_foglamp(payload:dict={}, arg_host:str='localhost', arg_port:in
           await resp.text()
           status_code = resp.status
           if status_code in range(400, 500):
-             print("Bad request error | code:{}, reason: {}".format(status_code, resp.reason))
-             exit(1)
+             return "Bad request error | code:{}, reason: {}".format(status_code, resp.reason)
           if status_code in range(500, 600):
-             print("Server error | code:{}, reason: {}".format(status_code, resp.reason))
-             exit(1)
+             return "Server error | code:{}, reason: {}".format(status_code, resp.reason)
+          return 0
 
 def main(): 
    """
@@ -67,8 +66,14 @@ def main():
 
    # Send to FogLAMP 
    loop = asyncio.get_event_loop()
+   outputs=[]
    for obj in data: 
-      loop.run_until_complete(send_to_foglamp(obj))
-
+      output=loop.run_until_complete(send_to_foglamp(obj, args.host, args.port))
+      if output != 0: 
+         print(output) 
+         exit(1)
+      outputs.append(output)
+   print(outputs) 
+ 
 if __name__ == '__main__': 
    main()
