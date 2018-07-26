@@ -28,7 +28,7 @@ optional arguments:
 ~/foglamp-south-plugin$ python3 GitHub_Data_Generator/code/generate_github_data.py ~/auth_pair.txt localhost 6683 -s json -d /tmp
 
 # Send to FogLAMP + Show Output 
-~/foglamp-south-plugin$ python3 GitHub_Data_Generator/code/generate_github_data.py ~/auth_pair.txt localhost 6683 -s foglamp -d /tmp
+~/foglamp-south-plugin$ python3 GitHub_Data_Generator/code/generate_github_data.py ~/auth_pair.txt localhost 6683 -s foglamp
 ~/foglamp-south-plugin$ curl -X GET http://localhost:8081/foglamp/asset | jq 
   {
     "count": 14,
