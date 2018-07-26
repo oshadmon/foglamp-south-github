@@ -7,12 +7,78 @@ The following scripts take data from different components (such as _GitHub_ and 
 .
 
 # Scripts 
-This version of the code sends data to JSON files 
 
 `GitHub_Data_Generator` - The following is based on [github-traffic-stats](https://github.com/nchah/github-traffic-stats), retrieving data from GitHub and send it to FogLAMP. 
+```
+# Help 
+~/foglamp-south-plugin$ python3 GitHub_Data_Generator/code/generate_github_data.py --help 
+usage: generate_github_data.py [-h] [-s SEND] [-d DIR] auth_file host port
+
+positional arguments:
+  auth_file             authentication file
+  host                  FogLAMP POST Host
+  port                  FogLAMP POST Port
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -s SEND, --send SEND  Where to send the data to (foglamp|json|both)
+  -d DIR, --dir DIR     directory to send data into (for JSON)
+
+# Send to JSON 
+~/foglamp-south-plugin$ python3 GitHub_Data_Generator/code/generate_github_data.py ~/auth_pair.txt localhost 6683 -s json -d /tmp
+
+# Send to FogLAMP + Show Output 
+~/foglamp-south-plugin$ python3 GitHub_Data_Generator/code/generate_github_data.py ~/auth_pair.txt localhost 6683 -s foglamp -d /tmp
+~/foglamp-south-plugin$ curl -X GET http://localhost:8081/foglamp/asset | jq 
+  {
+    "count": 14,
+    "assetCode": "github/FogLAMP/clones"
+  },
+  {
+    "count": 30,
+    "assetCode": "github/FogLAMP/commits/timestamp"
+  },
+  {
+    "count": 1,
+    "assetCode": "github/FogLAMP/commits/users"
+  },
+  {
+    "count": 1,
+    "assetCode": "github/FogLAMP/commits/users/Amarendra"
+  },
+  {
+    "count": 1,
+    "assetCode": "github/FogLAMP/commits/users/Ashwin-Gopalakrishnan"
+  },
+  {
+    "count": 1,
+    "assetCode": "github/FogLAMP/commits/users/Mark-Riddoch"
+  },
+  {
+    "count": 1,
+    "assetCode": "github/FogLAMP/commits/users/Praveen-Garg"
+  },
+  {
+    "count": 1,
+    "assetCode": "github/FogLAMP/commits/users/amarendra-dianomic"
+  },
+  {
+    "count": 1,
+    "assetCode": "github/FogLAMP/commits/users/ashwinscale"
+  },
+  {
+    "count": 1,
+    "assetCode": "github/FogLAMP/commits/users/pintomax"
+  },
+  {
+    "count": 13,
+    "assetCode": "github/FogLAMP/traffic"
+  }
+
+
+```
 
 `System_Data` - The following utilizes `psutil` to get CPU, Memory, and Disk matrix regarding the FogLAMP env. 
-
 ```
 # Help
 ~/foglamp-south-plugin$ python3 System_Data/code/generate_system_data.py --help
@@ -78,7 +144,6 @@ optional arguments:
 ```
 
 `Send_JSON` - Given a JSON file, send data into [FogLAMP]((https://github.com/foglamp/FogLAMP).
- 
 ```
 # Help
 ~/foglamp-south-plugin$ python3 Send_JSON/code/json_to_foglamp.py --help 
@@ -111,5 +176,4 @@ optional arguments:
     "count": 1,
     "assetCode": "system_memory"
   }
-]
 ```
