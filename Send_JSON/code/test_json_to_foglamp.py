@@ -127,7 +127,7 @@ class TestJSON2FogLAMP:
          url='http://%s:%s/foglamp/asset/%s' 
          output=requests.get(url % ('localhost', 8081, assetCode)).json()[0]
          timestamp, readings=self.__get_data(data, assetCode)
-        assert output['timestamp'].split(".")[0] == timestamp.split(".")[0]
+         assert output['timestamp'].split(".")[0] == timestamp.split(".")[0]
          for key in sorted(readings.keys()): 
             assert output['reading'][key] == readings[key]
             
