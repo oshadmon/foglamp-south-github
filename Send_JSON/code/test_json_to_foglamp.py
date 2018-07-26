@@ -17,33 +17,8 @@ class TestJSON2FogLAMP:
       2. In order to run, make sure FogLAMP is in $HOME dir, and FogLAMP is clean/not running
       """  
       self.que = queue.Queue()  
-      self.foglamp=os.path.expanduser(os.path.expandvars('$HOME/FogLAMP/scripts/foglamp'))
+      #self.foglamp=os.path.expanduser(os.path.expandvars('$HOME/FogLAMP/scripts/foglamp'))
       self.file_name=os.path.expanduser(os.path.expandvars('$HOME/foglamp-south-plugin/System_Data/sample/2018_07_24_13_21_33_system_stats.json'))
-      self.__start_foglamp()
-      time.sleep(5)
-
-   def teardown_method(self): 
-      """
-      Stop and clean FogLAMP
-      """
-      self.__stop_foglamp() 
-      self.__reset_foglamp()
-
-   def __stop_foglamp(self):
-      """
-      Stop FogLAMP
-       """
-      os.system('%s stop' % self.foglamp) 
-   def __reset_foglamp(self): 
-      """
-      Reset FogLAMP
-      """ 
-      os.system('%s reset' % self.foglamp)
-   def __start_foglamp(self): 
-      """
-      Start FogLAMP
-      """
-      os.system('%s start' % self.foglamp)
 
    def __get_data(self, data:list=[], assetCode:str='')->(str, dict): 
       """
@@ -102,6 +77,11 @@ class TestJSON2FogLAMP:
          2. Data gets sent 
          3. Validate data
       """
+      # Start FogLAMP
+      foglamp=os.path.expanduser(os.path.expandvars('$HOME/FogLAMP/scripts/foglamp'))
+      os.system('%s start' % foglamp)
+      time.sleep(5)
+
       # Generate data 
       data=json_to_foglamp.file_to_list(self.file_name)
       
@@ -131,4 +111,6 @@ class TestJSON2FogLAMP:
          for key in sorted(readings.keys()): 
             assert output['reading'][key] == readings[key]
             
-
+      # Stop FogLAMP
+      os.system('%s stop' % foglamp)
+      os.system('%s reset' % foglamp)
