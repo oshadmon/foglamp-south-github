@@ -1,7 +1,7 @@
 """
 Name: Ori Shadmon
 Date: July 2018
-Description: Retrieve system insight and store it into JSON file 
+Description: Retrieve system insight and send it into FogLAMP 
 """ 
 import aiohttp
 import argparse
@@ -25,13 +25,13 @@ def cpu_insight(que:queue.Queue=None)->dict:
    """ 
    Get CPU utilization insight 
    :return: 
-      dict with CPU info - precentage (per CPU), system, idle, and iowait 
+      dict with CPU info - percentage (per CPU), system, idle, and iowait 
    """
    # Precetnage utilized per CPU
-   precentage=psutil.cpu_percent(interval=None, percpu=True) 
-   precentage_data={}
-   for i in range(len(precentage)):
-      precentage_data['cpu_%s' % i]=precentage[i]
+   percentage=psutil.cpu_percent(interval=None, percpu=True) 
+   percentage_data={}
+   for i in range(len(percentage)):
+      percentage_data['cpu_%s' % i]=percentage[i]
 
    # CPU times 
    output=psutil.cpu_times()
@@ -41,8 +41,8 @@ def cpu_insight(que:queue.Queue=None)->dict:
    
    # Store all generated data into a single dict 
    cpu_data={} 
-   for key in precentage_data: 
-      cpu_data[key]=precentage_data[key] 
+   for key in percentage_data: 
+      cpu_data[key]=percentage_data[key] 
    cpu_data['system']=system
    cpu_data['idle']=idle
    cpu_data['iowait']=iowait
@@ -52,7 +52,7 @@ def mem_insight(que:queue.Queue=None)->dict:
    """
    Get Memory utilization insight
    :return: 
-      dict with Memory info - precentage and whether or not it's at risk 
+      dict with Memory info - percentage and whether or not it's at risk 
    """
    mem=psutil.virtual_memory()
    percent=mem.percent
@@ -77,11 +77,11 @@ def disk_insight(que:queue.Queue=None)->dict:
 
    que.put({'useage': useage, 'warning': warning, 'read': read_count, 'write': write_count}) 
 
-def battery_precent(que:queue.Queue=None)->dict: 
+def battery_insight(que:queue.Queue=None)->dict: 
    """
-   Get Battery precent and status
+   Get Battery percent and status
    :return: 
-      dict with battery info - precent, and whether plugged-in
+      dict with battery info - percent, and whether plugged-in
    """
    battery = psutil.sensors_battery()
    plugged = battery.power_plugged
@@ -90,7 +90,7 @@ def battery_precent(que:queue.Queue=None)->dict:
    else: 
       plugged=0
    percent = battery.percent
-   que.put({'precent': percent, 'plugged': plugged})
+   que.put({'percent': percent, 'plugged': plugged})
 
 def get_data()->(str, dict, dict, dict, dict): 
    """
@@ -108,7 +108,7 @@ def get_data()->(str, dict, dict, dict, dict):
             threading.Thread(target=cpu_insight,      args=(cpu_que,)), 
             threading.Thread(target=mem_insight,      args=(mem_que,)),
             threading.Thread(target=disk_insight,     args=(disk_que,)),
-            threading.Thread(target=battery_precent,  args=(battery,))
+            threading.Thread(target=battery_percent,  args=(battery,))
            ]
 
    for thread in threads: 
@@ -142,8 +142,7 @@ async def send_to_foglamp(payload:dict={}, arg_host:str='localhost', arg_port:in
     """
     POST to FogLAMP using HTTP 
     :args: 
-       payload:dict - Dictionary with data 
-       arg_host:str - FogLAMP Host 
+
        arg_port:int - FogLAMP POST port 
     """
     headers = {'content-type': 'application/json'}
@@ -159,16 +158,34 @@ async def send_to_foglamp(payload:dict={}, arg_host:str='localhost', arg_port:in
              print("Server error | code:{}, reason: {}".format(status_code, resp.reason))
              exit(1)
 
+def write_to_file(file_name:str='/tmp/data.json', data:dict={}):
+   """
+   Write to File 
+   :args: 
+      file_name:str - File containing data 
+      data:dict - Dictionary with data
+   """
+   with open(file_name, 'a') as f:
+      f.write(json.dumps(data))
+      f.write('\n')
+
 def main(): 
    """
    Main for generating GitHub data and sending it to FogLAMP 
-   :arguments:
-      host        FogLAMP POST Host
-      port        FogLAMP POST Port
+   :positional arguments:
+      host                  FogLAMP POST Host
+      port                  FogLAMP POST Port
+
+   :optional arguments:
+      -h, --help            show this help message and exit
+      -s SEND, --send SEND  Where to send the data to (foglamp|json|both)
+      -d DIR, --dir DIR     directory to send data into (for JSON)
    """
    parser = argparse.ArgumentParser()
    parser.add_argument('host', default='localhost', help='FogLAMP POST Host') 
    parser.add_argument('port', default=6683, help='FogLAMP POST Port')
+   parser.add_argument('-s', '--send', default='foglamp', help='Where to send the data to (foglamp|json|both)')
+   parser.add_argument('-d', '--dir', default='/tmp', help='directory to send data into (for JSON)')
    args = parser.parse_args()
 
    # Raw data 
@@ -180,13 +197,27 @@ def main():
    disk_data=create_json(timestamp, disk_data, 'disk')
    battery_data=create_json(timestamp, battery_data, 'battery')
    
-   # Send to FogLAMP
    loop = asyncio.get_event_loop()
-   loop.run_until_complete(send_to_foglamp(cpu_data, args.host, args.port))
-   loop.run_until_complete(send_to_foglamp(mem_data, args.host, args.port))
-   loop.run_until_complete(send_to_foglamp(disk_data, args.host, args.port))
-   loop.run_until_complete(send_to_foglamp(battery_data, args.host, args.port))
-   
+   file_name=args.dir+'/%s_system_stats.json' % datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
+   if args.send.lower() == 'foglamp': # Send to FogLAMP
+      loop.run_until_complete(send_to_foglamp(cpu_data, args.host, args.port))
+      loop.run_until_complete(send_to_foglamp(mem_data, args.host, args.port))
+      loop.run_until_complete(send_to_foglamp(disk_data, args.host, args.port))
+      loop.run_until_complete(send_to_foglamp(battery_data, args.host, args.port))
+   elif args.send.lower() == 'json': # Send to JSON 
+      write_to_file(file_name, cpu_data)
+      write_to_file(file_name, mem_data)
+      write_to_file(file_name, disk_data)
+      write_to_file(file_name, battery_data)
+   else: # If not FogLAMP or JSON then send to both
+      loop.run_until_complete(send_to_foglamp(cpu_data, args.host, args.port))
+      loop.run_until_complete(send_to_foglamp(mem_data, args.host, args.port))
+      loop.run_until_complete(send_to_foglamp(disk_data, args.host, args.port))
+      loop.run_until_complete(send_to_foglamp(battery_data, args.host, args.port))
+      write_to_file(file_name, cpu_data)
+      write_to_file(file_name, mem_data)
+      write_to_file(file_name, disk_data)
+      write_to_file(file_name, battery_data)
 
 if __name__ == '__main__': 
    main() 
