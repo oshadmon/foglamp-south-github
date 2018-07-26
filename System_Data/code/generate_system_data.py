@@ -108,7 +108,7 @@ def get_data()->(str, dict, dict, dict, dict):
             threading.Thread(target=cpu_insight,      args=(cpu_que,)), 
             threading.Thread(target=mem_insight,      args=(mem_que,)),
             threading.Thread(target=disk_insight,     args=(disk_que,)),
-            threading.Thread(target=battery_percent,  args=(battery,))
+            threading.Thread(target=battery_insight,  args=(battery,))
            ]
 
    for thread in threads: 
