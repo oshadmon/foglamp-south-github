@@ -1,6 +1,31 @@
 # foglamp-south-github
 The following scripts take data from different components (such as _GitHub_ and _Google Analytics_), and send it into [FogLAMP](https://github.com/foglamp/FogLAMP).  
 
+# Prerequisites
+- [Python3](https://www.python.org/) 
+- [Pip3](https://pip.pypa.io/en/stable/) 
+- [PyTest](https://docs.pytest.org/en/latest/contents.html) 
+- [psutil](https://pypi.org/project/psutil/) 
+```
+# Update 
+sudo apt-get update 
+
+# Install python3
+sudo apt-get install python3-dev python3-dbus python3-setuptools
+
+# Install Pip3
+sudo apt-get install python3-pip
+# OR
+curl https://bootstrap.pypa.io/get-pip.py | sudo python3.6
+
+# Install PyTest 
+sudo pip3 install pytest 
+
+# Install psutil 
+sudo pip3 install psutil
+```
+
+
 
 # What is FogLAMP:
 [FogLAMP](https://github.com/foglamp/FogLAMP) is an open source platform for the **Internet of Things**, and an essential component in **Fog Computing**. It uses a modular **microservices architecture** including sensor data collection, storage, processing and forwarding to historians, Enterprise systems and Cloud-based services. FogLAMP can run in highly available, stand alone, unattended environments that assume unreliable network connectivity.
