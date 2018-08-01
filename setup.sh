@@ -23,8 +23,9 @@ cd $HOME
 git clone https://github.com/foglamp/foglamp-south-http.git
 cp $HOME/foglamp-south-http/python $HOME/FogLAMP/
 
-# Start HTTP Connection 
-output=$(curl -sX POST http://localhost:8081/foglamp/service -d '{"name": "HT"type": "south", "plugin": "http_south", "enabled": true}')
+# Sart HTTP Connection 
+output=$(curl -sX POST http://localhost:8081/foglamp/service -d '{"name": "HTTP SOUTH", "type": "south", "plugin": "http_south", "enabled": true}')
+
 
 # Remove HTTP clone 
 rm -rf $HOME/foglamp-south-http/python
