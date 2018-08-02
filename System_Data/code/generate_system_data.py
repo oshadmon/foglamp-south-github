@@ -136,10 +136,11 @@ async def send_to_foglamp(payload, arg_host:str='localhost', arg_port:int=6683):
           status_code = resp.status
           if status_code in range(400, 500):
              print("Bad request error | code:{}, reason: {}".format(status_code, resp.reason))
-             exit(1)
+             return False
           if status_code in range(500, 600):
              print("Server error | code:{}, reason: {}".format(status_code, resp.reason))
-             exit(1)
+             return False
+          return True
 
 def write_to_file(file_name:str='/tmp/data.json', data:dict={}):
    """
