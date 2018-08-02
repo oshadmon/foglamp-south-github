@@ -117,11 +117,11 @@ def create_json(timestamp:datetime.datetime=datetime.datetime.now(), data:dict={
    """
    return {'timestamp': str(timestamp), 
            'key':       str(uuid.uuid1()), 
-           'asset':    'system_%s' % asset, 
+           'asset':    'system/%s' % asset, 
            'readings':   data
           }
 
-async def send_to_foglamp(payload, arg_host:str='localhost', arg_port:int=6683):
+async def send_to_foglamp(payload:list=[], arg_host:str='localhost', arg_port:int=6683):
     """
     POST to FogLAMP using HTTP 
     :args: 
@@ -180,20 +180,18 @@ def main():
    mem_data=create_json(timestamp, mem_data, 'memory')
    disk_data=create_json(timestamp, disk_data, 'disk')
    
+   payload=[cpu_data, mem_data, disk_data]
+
    loop = asyncio.get_event_loop()
    file_name=args.dir+'/%s_system_stats.json' % datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
    if args.send.lower() == 'foglamp': # Send to FogLAMP
-      loop.run_until_complete(send_to_foglamp(cpu_data, args.host, args.port))
-      loop.run_until_complete(send_to_foglamp(mem_data, args.host, args.port))
-      loop.run_until_complete(send_to_foglamp(disk_data, args.host, args.port))
+      loop.run_until_complete(send_to_foglamp(payload, args.host, args.port))
    elif args.send.lower() == 'json': # Send to JSON 
       write_to_file(file_name, cpu_data)
       write_to_file(file_name, mem_data)
       write_to_file(file_name, disk_data)
    else: # If not FogLAMP or JSON then send to both
-      loop.run_until_complete(send_to_foglamp(cpu_data, args.host, args.port))
-      loop.run_until_complete(send_to_foglamp(mem_data, args.host, args.port))
-      loop.run_until_complete(send_to_foglamp(disk_data, args.host, args.port))
+      loop.run_until_complete(send_to_foglamp(payload, args.host, args.port))
       write_to_file(file_name, cpu_data)
       write_to_file(file_name, mem_data)
       write_to_file(file_name, disk_data)
