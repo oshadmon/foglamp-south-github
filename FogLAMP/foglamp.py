@@ -21,7 +21,7 @@ class FogLAMP:
       """
       os.system('%s/scripts/foglamp start' % self.foglamp_dir) 
       stmt='{"name": "HTTP SOUTH", "type": "south", "plugin": "http_south", "enabled": true}'
-      stmt="output=$(curl -sX POST http://localhost:8081/foglamp/service -d '%s'" % stmt
+      stmt="output=$(curl -sX POST http://localhost:8081/foglamp/service -d '%s')" % stmt
       print(stmt)
       os.system(stmt)
 
