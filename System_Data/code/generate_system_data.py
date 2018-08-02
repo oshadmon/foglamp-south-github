@@ -77,20 +77,6 @@ def disk_insight(que:queue.Queue=None)->dict:
 
    que.put({'useage': useage, 'warning': warning, 'read': read_count, 'write': write_count}) 
 
-def battery_insight(que:queue.Queue=None)->dict: 
-   """
-   Get Battery percent and status
-   :return: 
-      dict with battery info - percent, and whether plugged-in
-   """
-   battery = psutil.sensors_battery()
-   plugged = battery.power_plugged
-   if plugged is True: 
-      plugged=1
-   else: 
-      plugged=0
-   percent = battery.percent
-   que.put({'percent': percent, 'plugged': plugged})
 
 def get_data()->(str, dict, dict, dict, dict): 
    """
@@ -102,13 +88,11 @@ def get_data()->(str, dict, dict, dict, dict):
    cpu_que=queue.Queue()
    mem_que=queue.Queue() 
    disk_que=queue.Queue()
-   battery=queue.Queue()
 
    threads=[threading.Thread(target=get_timestamp,    args=(timestamp_que,)), 
             threading.Thread(target=cpu_insight,      args=(cpu_que,)), 
             threading.Thread(target=mem_insight,      args=(mem_que,)),
             threading.Thread(target=disk_insight,     args=(disk_que,)),
-            threading.Thread(target=battery_insight,  args=(battery,))
            ]
 
    for thread in threads: 
@@ -119,8 +103,7 @@ def get_data()->(str, dict, dict, dict, dict):
    cpu_data=cpu_que.get() 
    mem_data=mem_que.get() 
    disk_data=disk_que.get() 
-   battery_data=battery.get()
-   return timestamp, cpu_data, mem_data, disk_data, battery_data
+   return timestamp, cpu_data, mem_data, disk_data
 
 def create_json(timestamp:datetime.datetime=datetime.datetime.now(), data:dict={}, asset:str='cpu')->dict:
    """
@@ -138,7 +121,7 @@ def create_json(timestamp:datetime.datetime=datetime.datetime.now(), data:dict={
            'readings':   data
           }
 
-async def send_to_foglamp(payload:dict={}, arg_host:str='localhost', arg_port:int=6683):
+async def send_to_foglamp(payload, arg_host:str='localhost', arg_port:int=6683):
     """
     POST to FogLAMP using HTTP 
     :args: 
@@ -189,13 +172,12 @@ def main():
    args = parser.parse_args()
 
    # Raw data 
-   timestamp, cpu_data, mem_data, disk_data, battery_data=get_data() 
+   timestamp, cpu_data, mem_data, disk_data=get_data() 
   
    # Prepare Data  
    cpu_data=create_json(timestamp, cpu_data, 'cpu') 
    mem_data=create_json(timestamp, mem_data, 'memory')
    disk_data=create_json(timestamp, disk_data, 'disk')
-   battery_data=create_json(timestamp, battery_data, 'battery')
    
    loop = asyncio.get_event_loop()
    file_name=args.dir+'/%s_system_stats.json' % datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
@@ -203,21 +185,17 @@ def main():
       loop.run_until_complete(send_to_foglamp(cpu_data, args.host, args.port))
       loop.run_until_complete(send_to_foglamp(mem_data, args.host, args.port))
       loop.run_until_complete(send_to_foglamp(disk_data, args.host, args.port))
-      loop.run_until_complete(send_to_foglamp(battery_data, args.host, args.port))
    elif args.send.lower() == 'json': # Send to JSON 
       write_to_file(file_name, cpu_data)
       write_to_file(file_name, mem_data)
       write_to_file(file_name, disk_data)
-      write_to_file(file_name, battery_data)
    else: # If not FogLAMP or JSON then send to both
       loop.run_until_complete(send_to_foglamp(cpu_data, args.host, args.port))
       loop.run_until_complete(send_to_foglamp(mem_data, args.host, args.port))
       loop.run_until_complete(send_to_foglamp(disk_data, args.host, args.port))
-      loop.run_until_complete(send_to_foglamp(battery_data, args.host, args.port))
       write_to_file(file_name, cpu_data)
       write_to_file(file_name, mem_data)
       write_to_file(file_name, disk_data)
-      write_to_file(file_name, battery_data)
 
 if __name__ == '__main__': 
    main() 
