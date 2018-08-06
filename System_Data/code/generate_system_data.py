@@ -179,7 +179,7 @@ def main():
    cpu_data=create_json(timestamp, cpu_data, 'cpu') 
    mem_data=create_json(timestamp, mem_data, 'memory')
    disk_data=create_json(timestamp, disk_data, 'disk')
-   
+
    payload=[cpu_data, mem_data, disk_data]
 
    loop = asyncio.get_event_loop()

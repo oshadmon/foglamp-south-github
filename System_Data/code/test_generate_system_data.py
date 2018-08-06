@@ -88,13 +88,6 @@ class TestSystemData:
       else: 
          return False 
 
-   def __battery_insight(self, data:dict={}): 
-      """
-      Test values for battery_percent are valid 
-      """
-      assert data['plugged'] == 0 or data['plugged'] == 1
-      assert type(data['percent']) == float
-
    def test_cpu_insight(self):
       """
       retrieve data about cpu_insight, and call testing against it
@@ -119,26 +112,17 @@ class TestSystemData:
       output=self.que.get()
       self.__disk_insight(output)  
 
-   def test_battery_insight(self): 
-      """
-      retrieve data from battery_percent, and call testing against it
-      """
-      generate_system_data.battery_insight(self.que)
-      output=self.que.get() 
-      self.__battery_insight(output)
-
    def test_get_data(self): 
       """
       execute get_data, and verify data is valid 
       :assert: 
          timestamp is valid type 
       """
-      timestamp, cpu_data, mem_data, disk_data, battery_data=generate_system_data.get_data() 
+      timestamp, cpu_data, mem_data, disk_data=generate_system_data.get_data() 
       assert type(timestamp) == datetime.datetime
       self.__cpu_insight(cpu_data)
       self.__mem_insight(mem_data)
       self.__disk_insight(disk_data)
-      self.__battery_insight(battery_data) 
 
    def test_create_json(self): 
       """
@@ -148,10 +132,10 @@ class TestSystemData:
          2. timestamp didn't change 
          3. uuid is valid 
       """
-      timestamp, cpu_data, mem_data, disk_data, battery_data=generate_system_data.get_data()
+      timestamp, cpu_data, mem_data, disk_data=generate_system_data.get_data()
       output=generate_system_data.create_json(timestamp, cpu_data, 'cpu') 
       assert sorted(output.keys()) == ['asset', 'key', 'readings', 'timestamp']
-      assert output['asset'] == 'system_cpu'
+      assert output['asset'] == 'system/cpu'
       assert output['timestamp'] == str(timestamp)
       self.__cpu_insight(output['readings'])
       try: 
@@ -159,28 +143,28 @@ class TestSystemData:
       except: 
          return False
 
-   def test_system_data_json(self):
+   def test_write_to_file(self):
       """
       Test that data gets sent into JSON file - generate_system_data_json.py 
       :assert: 
          1. data added to file
       """
-      generate_system_data.battery_insight(self.que)
-      battery_data=self.que.get() 
+      generate_system_data.mem_insight(self.que)
+      mem_data=self.que.get() 
       generate_system_data.get_timestamp(self.que)
       timestamp=self.que.get()
-
+      
       output=generate_system_data.create_json(timestamp, battery_data, 'battery')
-      file_name='/tmp/%s_system_stats.json' % datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
 
+      file_name='/tmp/%s_system_stats.json' % datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
       os.system('rm -rf %s' % file_name)
-      open(file_name, 'w').close() 
+      open(file_name, 'w').close()
+      
       before=os.stat(file_name).st_size 
       generate_system_data.write_to_file(file_name, output) # Write to file
       after=os.stat(file_name).st_size
-
-      assert before < after 
-
+   
+      assert before < after
       os.system('rm -rf %s' % file_name)
 
    def test_send_to_foglamp(self): 
@@ -193,39 +177,36 @@ class TestSystemData:
       """
       # Start FogLAMP
       foglamp=os.path.expanduser(os.path.expandvars('$HOME/FogLAMP/scripts/foglamp'))
-      os.system('%s start' % foglamp)
+      os.system('python3 $HOME/foglamp-south-plugin/FogLAMP/foglamp.py stop') 
+      os.system('python3 $HOME/foglamp-south-plugin/FogLAMP/foglamp.py reset') 
+      os.system('python3 $HOME/foglamp-south-plugin/FogLAMP/foglamp.py start')
       
       # Generate Data
-      generate_system_data.battery_insight(self.que)
-      battery_data=self.que.get() 
-      generate_system_data.get_timestamp(self.que)
-      timestamp=self.que.get()
-      payload=generate_system_data.create_json(timestamp, battery_data, 'battery')
-      
+      timestamp, cpu_data, mem_data, disk_data=generate_system_data.get_data()
+      cpu_data=generate_system_data.create_json(timestamp, cpu_data, 'cpu')
+      mem_data=generate_system_data.create_json(timestamp, mem_data, 'memory')
+      disk_data=generate_system_data.create_json(timestamp, disk_data, 'disk')
+      payload=[cpu_data, mem_data, disk_data]
+
       time.sleep(5)
+
       # FogLAMP is up
       url='http://%s:%s/foglamp/asset'
       result=requests.get(url % ('localhost', 8081))
       assert result.json() == []
-      
-      # Send Data 
-      loop=asyncio.get_event_loop()
-      output=loop.run_until_complete(generate_system_data.send_to_foglamp(payload, '127.0.0.1', 6683)) 
-      assert output == None
-     
-      time.sleep(5)
-      # Validate data 
+
+      # Send data 
+      loop = asyncio.get_event_loop()
+
+      # uses default config, if fails run: `curl -X GET http://localhost:8081/foglamp/category/HTTP%20SOUTH` to get config info
+      loop.run_until_complete(generate_system_data.send_to_foglamp(payload, 'localhost', 6683))  
+
+      # Verify data 
       url='http://%s:%s/foglamp/asset'
-      results=requests.get(url % ('localhost', 8081)).json()
-      for result in results:
-         assert result['count'] == 1
-         assetCode=result['assetCode']
-         url='http://%s:%s/foglamp/asset/%s'
-         output=requests.get(url % ('localhost', 8081, assetCode)).json()[0]
-         assert str(output['timestamp']).split('.')[0] == str(timestamp).split('.')[0]
-         assert output['reading']['plugged'] == battery_data['plugged']
-         assert output['reading']['percent'] == battery_data['percent']
+      result=requests.get(url % ('localhost', 8081))
+      time.sleep(10) 
+      print(result.json())
+      assert len(result.json()) > 0
 
       # Stop FogLAMP 
-      os.system('%s stop' % foglamp) 
-      os.system('%s reset' % foglamp)
+ 
