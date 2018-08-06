@@ -8,6 +8,16 @@ class FogLAMP:
       self.foglamp_dir=os.path.expanduser(os.path.expandvars('$HOME/FogLAMP'))
       if os.path.isdir(self.foglamp_dir) is True: 
          os.environ['FOGLAMP_ROOT']=self.foglamp_dir 
+      self.__get_latest()  
+
+
+   def __get_latest(self): 
+      """
+      Get latest code 
+      """
+      os.system('cd $HOME/FogLAMP; git checkout develop;  git pull origin develop')
+      os.system('cd $HOME/foglamp-south-http; git checkout master; git pull origin master')
+      os.system('cd $HOME')
 
    def prepare_foglamp(self):
       """
@@ -15,14 +25,21 @@ class FogLAMP:
       """
       os.system('bash $HOME/foglamp-south-plugin/FogLAMP/setup.sh')
 
+   def __start_http(self):
+      """
+      Start http service
+      """
+      os.system('cp -r $HOME/foglamp-south-http/python ~/FogLAMP')
+      stmt='{"name": "HTTP SOUTH", "type": "south", "plugin": "http_south", "enabled": true}'
+      stmt="output=$(curl -sX POST http://localhost:8081/foglamp/service -d '%s')" % stmt
+      os.system(stmt)
+
    def start_foglamp(self): 
       """
       Start FogLAMP 
       """
       os.system('%s/scripts/foglamp start' % self.foglamp_dir) 
-      stmt='{"name": "HTTP SOUTH", "type": "south", "plugin": "http_south", "enabled": true}'
-      stmt="output=$(curl -sX POST http://localhost:8081/foglamp/service -d '%s')" % stmt
-      os.system(stmt)
+      self.__start_http() 
 
    def stop_foglamp(self):
       """
