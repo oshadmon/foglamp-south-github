@@ -24,22 +24,6 @@ class TestSystemData:
       """
       self.que=queue.Queue() 
 
-   def __stop_foglamp(self):
-      """
-      Stop FogLAMP
-       """
-      os.system('%s stop' % self.foglamp)
-   def __reset_foglamp(self):
-      """
-      Reset FogLAMP
-      """
-      os.system('%s reset' % self.foglamp)
-   def __start_foglamp(self):
-      """
-      Start FogLAMP
-      """
-      os.system('%s start' % self.foglamp)
-
    def __cpu_insight(self, data:dict={}): 
       """
       Test values for cpu_insight are valid 
@@ -170,10 +154,54 @@ class TestSystemData:
    def test_send_to_foglamp(self): 
       """
       Test send_to_foglamp
+      In order to run this test correctly must use -s
       :assert:
          1. FogLAMP is up 
          2. Data gets sent 
          3. Validate data 
       """
       # Start FogLAMP
-      pass 
+      os.system('python3 $HOME/foglamp-south-plugin/FogLAMP/foglamp.py stop')
+      os.system('python3 $HOME/foglamp-south-plugin/FogLAMP/foglamp.py reset') 
+      os.system('python3 $HOME/foglamp-south-plugin/FogLAMP/foglamp.py start') 
+      time.sleep(5)
+
+      # Assert FogLAMP is up 
+      url='http://127.0.0.1:8081/foglamp/asset'
+      results=requests.get(url).json()
+      assert results == [] 
+
+      # Generate Data
+      timestamp, cpu_data, mem_data, disk_data=generate_system_data.get_data()
+      cpu_data=generate_system_data.create_json(timestamp, cpu_data, 'cpu') 
+      mem_data=generate_system_data.create_json(timestamp, mem_data, 'mem') 
+      disk_data=generate_system_data.create_json(timestamp, disk_data, 'disk') \
+
+      payload=[cpu_data, mem_data, disk_data] 
+ 
+      # Send to FogLAMP
+      loop=asyncio.get_event_loop()
+      output=loop.run_until_complete(generate_system_data.send_to_foglamp(payload, '127.0.0.1', 6683))
+      assert output == True
+      time.sleep(5)
+      
+      # Validate data 
+      url='http://127.0.0.1:8081/foglamp/asset'
+      results=requests.get(url).json()
+      for result in results: 
+         assert result['count'] == 1 
+         assetCode=result['assetCode'].replace('/', '%2F') 
+         output=requests.get(url+'/%s' % assetCode).json()
+         try: 
+            json.dumps(output[0])
+         except: 
+            assert False
+         else: 
+            assert True
+
+      # Stop FogLAMP
+      os.system('python3 $HOME/foglamp-south-plugin/FogLAMP/foglamp.py stop')
+      os.system('python3 $HOME/foglamp-south-plugin/FogLAMP/foglamp.py reset')
+
+
+
