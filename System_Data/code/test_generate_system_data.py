@@ -154,7 +154,7 @@ class TestSystemData:
       generate_system_data.get_timestamp(self.que)
       timestamp=self.que.get()
       
-      output=generate_system_data.create_json(timestamp, battery_data, 'battery')
+      output=generate_system_data.create_json(timestamp, mem_data, 'memory')
 
       file_name='/tmp/%s_system_stats.json' % datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
       os.system('rm -rf %s' % file_name)
@@ -176,37 +176,4 @@ class TestSystemData:
          3. Validate data 
       """
       # Start FogLAMP
-      foglamp=os.path.expanduser(os.path.expandvars('$HOME/FogLAMP/scripts/foglamp'))
-      os.system('python3 $HOME/foglamp-south-plugin/FogLAMP/foglamp.py stop') 
-      os.system('python3 $HOME/foglamp-south-plugin/FogLAMP/foglamp.py reset') 
-      os.system('python3 $HOME/foglamp-south-plugin/FogLAMP/foglamp.py start')
-      
-      # Generate Data
-      timestamp, cpu_data, mem_data, disk_data=generate_system_data.get_data()
-      cpu_data=generate_system_data.create_json(timestamp, cpu_data, 'cpu')
-      mem_data=generate_system_data.create_json(timestamp, mem_data, 'memory')
-      disk_data=generate_system_data.create_json(timestamp, disk_data, 'disk')
-      payload=[cpu_data, mem_data, disk_data]
-
-      time.sleep(5)
-
-      # FogLAMP is up
-      url='http://%s:%s/foglamp/asset'
-      result=requests.get(url % ('localhost', 8081))
-      assert result.json() == []
-
-      # Send data 
-      loop = asyncio.get_event_loop()
-
-      # uses default config, if fails run: `curl -X GET http://localhost:8081/foglamp/category/HTTP%20SOUTH` to get config info
-      loop.run_until_complete(generate_system_data.send_to_foglamp(payload, 'localhost', 6683))  
-
-      # Verify data 
-      url='http://%s:%s/foglamp/asset'
-      result=requests.get(url % ('localhost', 8081))
-      time.sleep(10) 
-      print(result.json())
-      assert len(result.json()) > 0
-
-      # Stop FogLAMP 
- 
+      pass 
