@@ -86,11 +86,11 @@ def read_traffic(traffic:requests.models.Response=None, repo:str='repo_name', ti
    data=[]
    for key in traffic['views']: 
       timestamp=datetime.datetime.strptime(key['timestamp'], '%Y-%m-%dT%H:%M:%SZ')
-      data.append(json.dumps({'timestamp' : str(timestamp), 
-                              'key'       : str(uuid.uuid1()),
-                              'asset'     : 'github/%s/traffic' % repo, 
-                              'readings'  : {'traffic' : key['uniques']}
-                            }))
+      data.append({'timestamp' : str(timestamp), 
+                   'key'       : str(uuid.uuid1()),
+                   'asset'     : 'github/%s/traffic' % repo, 
+                   'readings'  : {'traffic' : key['uniques']}
+                 })
    return data
 
 def read_commits_timestamp(commits:requests.models.Response=None, repo:str='repo_name', timestamp:str=datetime.datetime.now().strftime('%Y_%m_%d'))->list:
@@ -123,11 +123,11 @@ def read_commits_timestamp(commits:requests.models.Response=None, repo:str='repo
    # Create file with JSON object based on timestamps dict 
    data=[]
    for key in timestamps: 
-      data.append(json.dumps({'timestamp' : str(key),
-                              'key'       : str(uuid.uuid1()),
-                              'asset'     : 'github/%s/commits/timestamp' % repo, 
-                              'readings'  : {'commits/timestamp' : timestamps[key]}
-                            }))
+      data.append({'timestamp' : str(key),
+                   'key'       : str(uuid.uuid1()),
+                   'asset'     : 'github/%s/commits/timestamp' % repo, 
+                   'readings'  : {'commits/timestamp' : timestamps[key]}
+                 })
    return data 
 
 def read_commits_users(commits:requests.models.Response=None, repo:str='repo_name', timestamp:str=datetime.datetime.now().strftime('%Y_%m_%d'))->list:
@@ -155,18 +155,18 @@ def read_commits_users(commits:requests.models.Response=None, repo:str='repo_nam
          users[user]=0
       users[user]+=1
 
-   data.append(json.dumps({'timestamp' : str(datetime.datetime.now()),    
-                           'key'       : str(uuid.uuid1()),
-                           'asset'     : 'github/%s/commits/users' % repo, 
-                           'readings'   : {'commits/users' : int(len(users))}
-                         }))
+   data.append({'timestamp' : str(datetime.datetime.now()),    
+                'key'       : str(uuid.uuid1()),
+                'asset'     : 'github/%s/commits/users' % repo, 
+                'readings'  : {'commits/users' : int(len(users))}
+              })
    # number of commits per user 
    for key in users: 
-      data.append(json.dumps({'timestamp' : str(datetime.datetime.now()), 
-                              'key'       : str(uuid.uuid1()),
-                              'asset'     : 'github/%s/commits/users/%s' % (repo, key.replace(' ','-').replace('_', '-')),
-                              'readings' : {'commits/users/%s' % key.replace(' ','-').replace('_', '-') : users[key]}
-                            })) 
+      data.append({'timestamp' : str(datetime.datetime.now()), 
+                   'key'       : str(uuid.uuid1()),
+                   'asset'     : 'github/%s/commits/users/%s' % (repo, key.replace(' ','-').replace('_', '-')),
+                   'readings'  : {'commits/users/%s' % key.replace(' ','-').replace('_', '-') : users[key]}
+                 }) 
    return data
 
 def read_clones(clones:requests.models.Response=None, repo:str='repo_name', timestamp:str=datetime.datetime.now().strftime('%Y_%m_%d'))->list: 
@@ -189,34 +189,34 @@ def read_clones(clones:requests.models.Response=None, repo:str='repo_name', time
    data=[]
    for key in clones['clones']:
       timestamp=datetime.datetime.strptime(key['timestamp'], '%Y-%m-%dT%H:%M:%SZ')
-      data.append(json.dumps({'timestamp' : str(key['timestamp']),
-                              'key'       : str(uuid.uuid1()),
-                              'asset'     : 'github/%s/clones' % repo,
-                              'readings'  : {'clones' : key['uniques']}
-                            }))
+      data.append({'timestamp' : str(key['timestamp']),
+                   'key'       : str(uuid.uuid1()),
+                   'asset'     : 'github/%s/clones' % repo,
+                   'readings'  : {'clones' : key['uniques']}
+                 })
    return data 
 
-async def send_to_foglamp(data:list=[], arg_host:str='localhost', arg_port:int=6683): 
-   """
-   POST to FogLAMP using HTTP
-   :args: 
-      data:list - list of JSON objects
-      arg_host:str - FogLAMP Host 
-      arg_port:int - FogLAMP POST port 
-   """  
-   headers = {'content-type': 'application/json'}
-   url = 'http://{}:{}/sensor-reading'.format(arg_host, arg_port)
-   for payload in data: 
-      async with aiohttp.ClientSession() as session:
-         async with session.post(url, data=payload, headers=headers) as resp:
-            await resp.text()
-            status_code = resp.status
-            if status_code in range(400, 500):
-               print("Bad request error | code:{}, reason: {}".format(status_code, resp.reason))
-               exit(1)
-            if status_code in range(500, 600):
-               print("Server error | code:{}, reason: {}".format(status_code, resp.reason))
-               exit(1)
+
+async def send_to_foglamp(payload:list=[], arg_host:str='localhost', arg_port:int=6683):
+    """
+    POST to FogLAMP using HTTP 
+    :args: 
+
+       arg_port:int - FogLAMP POST port 
+    """
+    headers = {'content-type': 'application/json'}
+    url = 'http://{}:{}/sensor-reading'.format(arg_host, arg_port)
+    async with aiohttp.ClientSession() as session:
+       async with session.post(url, data=json.dumps(payload), headers=headers) as resp:
+          await resp.text()
+          status_code = resp.status
+          if status_code in range(400, 500):
+             print("Bad request error | code:{}, reason: {}".format(status_code, resp.reason))
+             return False
+          if status_code in range(500, 600):
+             print("Server error | code:{}, reason: {}".format(status_code, resp.reason))
+             return False
+          return True
 
 def write_to_file(file_name:str='/tmp/data.json', data:list=[]):
    """
@@ -283,11 +283,12 @@ def main():
     clones_data=read_clones(clones_request, repo, timestamp) 
     
     file_name=args.dir+'/%s_github_%s_data.json' % (datetime.datetime.now().strftime('%Y_%m_%d'), repo) 
+    payload=[traffic_data, commits_timestamp_data, commits_users_data, clones_data]
     loop = asyncio.get_event_loop()
     if args.send.lower() == 'foglamp': # Send to FogLAMP 
        loop.run_until_complete(send_to_foglamp(traffic_data, args.host, args.port)) 
-       loop.run_until_complete(send_to_foglamp(commits_timestamp_data, args.host, args.port))
-       loop.run_until_complete(send_to_foglamp(commits_users_data, args.host, args.port))
+       loop.run_until_complete(send_to_foglamp(commits_timestamp_data, args.host, args.port)) 
+       loop.run_until_complete(send_to_foglamp(commits_users_data, args.host, args.port)) 
        loop.run_until_complete(send_to_foglamp(clones_data, args.host, args.port))
     elif args.send.lower() == 'json': # Send to JSON file
        open(file_name, 'w').close()
@@ -296,10 +297,7 @@ def main():
        write_to_file(file_name, commits_users_data) 
        write_to_file(file_name, clones_data)
     else: # If something else write to both
-       loop.run_until_complete(send_to_foglamp(traffic_data, args.host, args.port))
-       loop.run_until_complete(send_to_foglamp(commits_timestamp_data, args.host, args.port))
-       loop.run_until_complete(send_to_foglamp(commits_users_data, args.host, args.port))
-       loop.run_until_complete(send_to_foglamp(clones_data, args.host, args.port))
+       loop.run_until_complete(send_to_foglamp(payload, args.host, args.port))
        open(file_name, 'w').close()
        write_to_file(file_name, traffic_data)
        write_to_file(file_name, commits_timestamp_data)
