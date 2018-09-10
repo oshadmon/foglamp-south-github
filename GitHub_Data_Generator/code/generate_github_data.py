@@ -293,10 +293,22 @@ def main():
        write_to_file(file_name, commits_timestamp_data)
        write_to_file(file_name, commits_users_data) 
        write_to_file(file_name, clones_data)
+    else: 
+       open(file_name, 'w').close()
+       loop.run_until_complete(send_to_foglamp(traffic_data, args.hp.split(':')[0], int(args.hp.split(':')[1])))
+       loop.run_until_complete(send_to_foglamp(commits_timestamp_data, args.hp.split(':')[0], int(args.hp.split(':')[1])))
+       loop.run_until_complete(send_to_foglamp(commits_users_data, args.hp.split(':')[0], int(args.hp.split(':')[1])))
+       loop.run_until_complete(send_to_foglamp(clones_data, args.hp.split(':')[0], int(args.hp.split(':')[1])))
+       write_to_file(file_name, traffic_data)
+       write_to_file(file_name, commits_timestamp_data)
+       write_to_file(file_name, commits_users_data)
+       write_to_file(file_name, clones_data)
+
   
 
 if __name__ == '__main__': 
    main()
+
 
 
 
