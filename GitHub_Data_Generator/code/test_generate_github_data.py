@@ -1,13 +1,21 @@
+import asyncio
 import datetime 
 import json 
 import os 
 import queue 
 import random
 import requests
+import sys 
 import threading
+import time
 import uuid
 
 import generate_github_data
+
+# Code requires foglamp\_dir (under '$HOME/FogLAMP') and foglamp_south_http (under '$HOME/foglamp-south-http')
+foglamp_dir=os.path.expanduser(os.path.expandvars('$HOME/foglamp-south-plugin/FogLAMP'))
+sys.path.insert(0, foglamp_dir)
+from foglamp import FogLAMP
 
 class TestGitHubData: 
    def setup_method(self): 
@@ -27,7 +35,7 @@ class TestGitHubData:
       self.repo=output[1]
       self.org=output[2] 
       self.json_dir='/tmp'
-
+      self.foglamp=FogLAMP() 
       os.system('rm -rf %s/*.json' % self.json_dir)
 
    def teardown_method(self): 
@@ -142,6 +150,9 @@ class TestGitHubData:
    def test_send_json(self):
       """
       Test cases where data gets sent to JSON
+      :assert: 
+         1. Assert data gets returned 
+         2. Data retuened can be converted to JSON  
       """
       traffic_request, timestamp = self.__main('traffic')
       traffic_data=generate_github_data.read_traffic(traffic_request, self.org, timestamp) 
@@ -161,4 +172,26 @@ class TestGitHubData:
             return True
     
 
+   def test_send_foglamp(self): 
+      """
+      Test cases where data gets sent to FogLAMP
+      :assert:
+         By executing CURL and geting a value assert timestamp info has been posted
+      """
+      self.foglamp.stop_foglamp() 
+      self.foglamp.reset_foglamp() 
+      self.foglamp.start_foglamp() 
+      traffic_request, timestamp = self.__main('traffic')
+      traffic_data=generate_github_data.read_traffic(traffic_request, self.org, timestamp)
+      loop = asyncio.get_event_loop()
+      loop.run_until_complete(generate_github_data.send_to_foglamp(traffic_data, 'localhost', 6683))
+      time.sleep(10)
+
+      url='http://localhost:8081/foglamp/asset'
+      res = requests.get(url)
+      result=res.json() 
+      assert len(result) == 1
+      
+      self.foglamp.stop_foglamp()
+      self.foglamp.reset_foglamp()
 
