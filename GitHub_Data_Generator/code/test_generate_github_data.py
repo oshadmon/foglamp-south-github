@@ -1,4 +1,5 @@
 import datetime 
+import json 
 import os 
 import queue 
 import random
@@ -138,5 +139,26 @@ class TestGitHubData:
       except:
          return False
 
+   def test_send_json(self):
+      """
+      Test cases where data gets sent to JSON
+      """
+      traffic_request, timestamp = self.__main('traffic')
+      traffic_data=generate_github_data.read_traffic(traffic_request, self.org, timestamp) 
+      file_name='/tmp/test_output.json'
+      open(file_name, 'w').close()
+      generate_github_data.write_to_file(file_name, traffic_data)
+      with open(file_name, 'r') as f: 
+         lines=f.read().split('\n')
+      del lines[-1]
+      assert len(lines) > 0
+      for line in lines: 
+         try: 
+            json.loads(line)
+         except: 
+            return False
+         else: 
+            return True
+    
 
 
