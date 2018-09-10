@@ -25,7 +25,7 @@ class TestGitHubData:
       self.auth=(str(output[0].split(':')[0]), str(output[0].split(':')[-1]))
       self.repo=output[1]
       self.org=output[2] 
-      self.json_dir=output[3]
+      self.json_dir='/tmp'
 
       os.system('rm -rf %s/*.json' % self.json_dir)
 

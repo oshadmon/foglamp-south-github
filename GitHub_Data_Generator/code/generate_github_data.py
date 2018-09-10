@@ -48,7 +48,7 @@ def send_request(traffic_que:queue.Queue=None, commits_que:queue.Queue=None, clo
 
    if traffic_response.status_code != 200: 
       print("Error %s: %s " % (traffic_response.status_code, traffic_response.json()['message']))
-      exit(1)
+      exit(1) 
 
    # Commits 
    commits_url = base_url + organization + '/' + repo + '/commits' 
@@ -201,9 +201,10 @@ async def send_to_foglamp(payload:list=[], arg_host:str='localhost', arg_port:in
     """
     POST to FogLAMP using HTTP 
     :args: 
-
+       payload:list - List of result 
        arg_port:int - FogLAMP POST port 
     """
+    #print(json.dumps(payload))
     headers = {'content-type': 'application/json'}
     url = 'http://{}:{}/sensor-reading'.format(arg_host, arg_port)
     async with aiohttp.ClientSession() as session:
@@ -227,7 +228,7 @@ def write_to_file(file_name:str='/tmp/data.json', data:list=[]):
    """
    with open(file_name, 'a') as f:
       for obj in data:
-         f.write(obj)
+         f.write(json.dumps(obj))
          f.write('\n')
 
 def main():
@@ -235,8 +236,6 @@ def main():
     Main
     :positional arguments:
        auth_file             authentication file
-       host                  FogLAMP POST Host
-       port                  FogLAMP POST Port
 
     :optional arguments:
        -h, --help            show this help message and exit
@@ -246,8 +245,7 @@ def main():
     """
     parser = argparse.ArgumentParser()
     parser.add_argument('auth_file', default='$HOME/foglamp-south-plugin/GitHub_Data_Generator/other/auth_pair.txt', help='authentication file')
-    parser.add_argument('host', default='localhost', help='FogLAMP POST Host')
-    parser.add_argument('port', default=6683, help='FogLAMP POST Port')
+    parser.add_argument('hp', default='localhost:6683', help='FogLAMP POST Host & Port [localhost:6683]')
     parser.add_argument('-s', '--send', default='foglamp', help='Where to send the data to (foglamp|json|both)')
     parser.add_argument('-d', '--dir', default='/tmp', help='directory to send data into (for JSON)')
     args = parser.parse_args()
@@ -258,7 +256,6 @@ def main():
     auth=(str(output[0].split(':')[0]), str(output[0].split(':')[-1]))
     repo=output[1]
     org=output[2]
-    json_dir=output[3]
 
     # Generate data 
     timestamp_que=queue.Queue()
@@ -281,30 +278,30 @@ def main():
     commits_timestamp_data=read_commits_timestamp(commits_request, repo, timestamp)
     commits_users_data=read_commits_users(commits_request, repo, timestamp) 
     clones_data=read_clones(clones_request, repo, timestamp) 
-    
+
     file_name=args.dir+'/%s_github_%s_data.json' % (datetime.datetime.now().strftime('%Y_%m_%d'), repo) 
     payload=[traffic_data, commits_timestamp_data, commits_users_data, clones_data]
     loop = asyncio.get_event_loop()
     if args.send.lower() == 'foglamp': # Send to FogLAMP 
-       loop.run_until_complete(send_to_foglamp(traffic_data, args.host, args.port)) 
-       loop.run_until_complete(send_to_foglamp(commits_timestamp_data, args.host, args.port)) 
-       loop.run_until_complete(send_to_foglamp(commits_users_data, args.host, args.port)) 
-       loop.run_until_complete(send_to_foglamp(clones_data, args.host, args.port))
+       loop.run_until_complete(send_to_foglamp(traffic_data, args.hp.split(':')[0], int(args.hp.split(':')[1]))) 
+       loop.run_until_complete(send_to_foglamp(commits_timestamp_data, args.hp.split(':')[0], int(args.hp.split(':')[1]))) 
+       loop.run_until_complete(send_to_foglamp(commits_users_data, args.hp.split(':')[0], int(args.hp.split(':')[1]))) 
+       loop.run_until_complete(send_to_foglamp(clones_data, args.hp.split(':')[0], int(args.hp.split(':')[1])))
     elif args.send.lower() == 'json': # Send to JSON file
        open(file_name, 'w').close()
        write_to_file(file_name, traffic_data)
        write_to_file(file_name, commits_timestamp_data)
        write_to_file(file_name, commits_users_data) 
        write_to_file(file_name, clones_data)
-    else: # If something else write to both
-       loop.run_until_complete(send_to_foglamp(payload, args.host, args.port))
-       open(file_name, 'w').close()
-       write_to_file(file_name, traffic_data)
-       write_to_file(file_name, commits_timestamp_data)
-       write_to_file(file_name, commits_users_data)
-       write_to_file(file_name, clones_data)
-
   
 
 if __name__ == '__main__': 
    main()
+
+
+
+
+
+
+
+
