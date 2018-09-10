@@ -4,10 +4,15 @@ import os
 import random
 import requests
 import queue
+import sys
 import time
-import urllib.request
 
 import json_to_foglamp
+# Code requires foglamp\_dir (under '$HOME/FogLAMP') and foglamp_south_http (under '$HOME/foglamp-south-http')
+foglamp_dir=os.path.expanduser(os.path.expandvars('$HOME/foglamp-south-plugin/FogLAMP'))
+sys.path.insert(0, foglamp_dir)
+from foglamp import FogLAMP
+
 
 class TestJSON2FogLAMP: 
    def setup_method(self): 
@@ -17,7 +22,9 @@ class TestJSON2FogLAMP:
       2. In order to run, make sure FogLAMP is in $HOME dir, and FogLAMP is clean/not running
       """  
       self.que = queue.Queue()  
-      #self.foglamp=os.path.expanduser(os.path.expandvars('$HOME/FogLAMP/scripts/foglamp'))
+      self.host='localhost' 
+      self.port=6683
+      self.foglamp=FogLAMP()
       self.file_name=os.path.expanduser(os.path.expandvars('$HOME/foglamp-south-plugin/System_Data/sample/2018_07_24_13_21_33_system_stats.json'))
 
    def __get_data(self, data:list=[], assetCode:str='')->(str, dict): 
@@ -69,48 +76,26 @@ class TestJSON2FogLAMP:
             assert payload['readings']['plugged'] == 0 
             assert payload['readings']['precent'] == 82.0
 
+
    def test_send_to_foglamp(self): 
       """
       Test send_to_foglamp
-      :assert:
-         1. FogLAMP is up 
-         2. Data gets sent 
-         3. Validate data
       """
-      # Start FogLAMP
-      foglamp=os.path.expanduser(os.path.expandvars('$HOME/FogLAMP/scripts/foglamp'))
-      os.system('%s start' % foglamp)
-      time.sleep(5)
+      loop = asyncio.get_event_loop()
+      obj=json_to_foglamp.file_to_list(self.file_name)[0]
+      self.foglamp.stop_foglamp()
+      self.foglamp.reset_foglamp()
+      self.foglamp.start_foglamp()
 
-      # Generate data 
-      data=json_to_foglamp.file_to_list(self.file_name)
-      
-      # FogLAMP is up
-      url='http://%s:%s/foglamp/asset'
-      result=requests.get(url % ('localhost', 8081))
-      assert result.json() == []
+      loop.run_until_complete(json_to_foglamp.send_to_foglamp(obj, self.host, self.port))
+      time.sleep(10) 
 
-      # Send data 
-      loop=asyncio.get_event_loop() 
-      for i in range(len(data)): 
-         payload=data[i]
-         output=loop.run_until_complete(json_to_foglamp.send_to_foglamp(payload, '127.0.0.1', 6683)) 
-         assert output == 0
-      time.sleep(5)
+      url='http://localhost:8081/foglamp/asset'
+      res = requests.get(url)
+      result=res.json()
+      print(result) 
+      assert len(result) == 1
 
-      # Validate data 
-      url='http://%s:%s/foglamp/asset'
-      results=requests.get(url % ('localhost', 8081)).json() 
-      for result in results: 
-         assert result['count'] == 1
-         assetCode=result['assetCode']
-         url='http://%s:%s/foglamp/asset/%s' 
-         output=requests.get(url % ('localhost', 8081, assetCode)).json()[0]
-         timestamp, readings=self.__get_data(data, assetCode)
-         assert output['timestamp'].split(".")[0] == timestamp.split(".")[0]
-         for key in sorted(readings.keys()): 
-            assert output['reading'][key] == readings[key]
-            
-      # Stop FogLAMP
-      os.system('%s stop' % foglamp)
-      os.system('%s reset' % foglamp)
+      self.foglamp.stop_foglamp()
+      self.foglamp.reset_foglamp()
+
