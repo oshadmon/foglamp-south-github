@@ -30,3 +30,6 @@ output=$(curl -sX POST http://localhost:8081/foglamp/service -d '{"name": "HTTP 
 # Remove HTTP clone 
 rm -rf $HOME/foglamp-south-http/python
 
+# Export prior to start 
+export FOGLAMP_ROOT=$HOME/FogLAMP
+
