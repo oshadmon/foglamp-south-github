@@ -20,7 +20,7 @@ class FogLAMP:
       Get latest code 
       Errors might occur if the user does any changes in either dir without doing add/commit before executing
       """	
-      os.system('cd %s; git checkout master;  git pull origin master' % self.foglamp_dir)
+      os.system('cd %s; git checkout develop;  git pull origin develop' % self.foglamp_dir)
       os.system('cd %s; git checkout master;  git pull origin master' % self.foglamp_south_http)
       os.system('cd $HOME')
 
