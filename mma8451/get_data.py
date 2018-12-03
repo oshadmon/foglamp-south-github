@@ -59,7 +59,7 @@ class GetData:
            raise RuntimeError('Failed to find MMA8451, check wiring!')
         return slave 
 
-    def __configure_slave(self, i2c:I2cController=None):
+    def __configure_slave(self, i2c:I2cController=None)->I2cPort:
         """
         Configure the slave
         :args: 
