@@ -144,7 +144,7 @@ def plugin_reconfigure(handle, new_config):
         new_handle: new handle to be used in the future calls
     Raises:
     """
-    _LOGGER.info("Old config for DHT11 plugin {} \n new config {}".format(handle, new_config))
+    _LOGGER.info("Old config for MMA8451 plugin {} \n new config {}".format(handle, new_config))
 
     new_handle = copy.deepcopy(new_config)
     new_handle['restart'] = 'no'
@@ -160,4 +160,4 @@ def plugin_shutdown(handle):
     Returns:
     Raises:
     """
-    _LOGGER.info("DHT11 Poll plugin shutdown")
+    _LOGGER.info("MMA8451 Poll plugin shutdown")
