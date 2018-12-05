@@ -1,3 +1,5 @@
+# Based on - https://github.com/adafruit/Adafruit_CircuitPython_MMA8451/blob/master/adafruit_mma8451.py
+
 from pyftdi.i2c import I2cController, I2cNackError, I2cPort
 try:
     import struct
