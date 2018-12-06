@@ -60,22 +60,14 @@ class GetData:
       try: 
          slave = i2c.get_port(AM2320_DEFAULT_ADDR)
       except: 
-         print('Unable to get Port for %s' % AM2320_DEFAULT_ADDR)
-         exit(1)
-
-      for i in range(10): 
-          try:
-              slave.read(0)
-              return slave
-          except:
-              pass
-          time.sleep(0.25)
-      raise ValueError("AM2320 not found")
-
+         raise ValueError('Unable to get Port for %s' % AM2320_DEFAULT_ADDR)
+      return slave
+      
    def _wake_sensor(self): 
        """
        Wake sensor
        """
+       time.sleep(0.02)
        try:
            self.slave.write(bytes([0x00]))
        except OSError: 
@@ -132,6 +124,5 @@ class GetData:
 if __name__ == '__main__': 
     gd=GetData()
     print(gd.temperature())
-    time.sleep(1)
     print(gd.humidity())
 

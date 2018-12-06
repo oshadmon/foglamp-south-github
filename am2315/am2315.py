@@ -21,7 +21,7 @@ import os
 import sys 
 import time
 am2315_get_data=os.path.expanduser(os.path.expandvars('$HOME/foglamp-south-plugin/am2315'))
-sys.path.insert(0, ina219_get_data)
+sys.path.insert(0, am2315_get_data)
 import get_data
 
 __author__ = "Ori Shadmon"
