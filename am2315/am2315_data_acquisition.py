@@ -29,7 +29,7 @@ def _crc16(data):
     return crc
 
 
-class GetData:
+class AM2315DataAcquisition:
    def __init__(self): 
       i2c=self.__init_i2c_controller()
       self.slave=self.__i2c_slave_port(i2c) 
@@ -85,8 +85,14 @@ class GetData:
        """
        self._wake_sensor()
        cmd = [reg & 0xFF, length]
-       self.slave.write_to(AM2320_CMD_READREG, bytearray(cmd))
-       result = self.slave.read(readlen=length+4)
+       try: 
+          self.slave.write_to(AM2320_CMD_READREG, bytearray(cmd))
+       except: 
+           pass 
+       try: 
+          result = self.slave.read(readlen=length+4)
+       except: 
+           pass
 
        if result[0] != 0x3 or result[1] != length:
           raise RuntimeError('I2C read failure')
@@ -122,7 +128,7 @@ class GetData:
 
 
 if __name__ == '__main__': 
-    gd=GetData()
-    print(gd.temperature())
-    print(gd.humidity())
+    am=AM2315DataAcquisition()
+    print(am.temperature())
+    print(am.humidity())
 

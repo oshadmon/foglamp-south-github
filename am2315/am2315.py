@@ -17,12 +17,10 @@ from foglamp.plugins.common import utils
 from foglamp.services.south import exceptions
 
 # Code connecting to MMA8451 
-import os 
-import sys 
 import time
-am2315_get_data=os.path.expanduser(os.path.expandvars('$HOME/foglamp-south-plugin/am2315'))
-sys.path.insert(0, am2315_get_data)
-import get_data
+
+# The path is specified for FogLAMP
+from foglamp.plugins.south.am2315 import am2315_data_acquisition
 
 __author__ = "Ori Shadmon"
 __copyright__ = "Copyright (c) 2017 OSIsoft, LLC"
@@ -91,7 +89,7 @@ def plugin_init(config):
     Raises:
     """
     handle = copy.deepcopy(config)
-    handle['sensor']=get_data.GetData()
+    handle['sensor']=am2315_data_acquisition.AM2315DataAcquisition()
     return handle
 
 
@@ -108,6 +106,8 @@ def plugin_poll(handle):
     Raises:
         DataRetrievalError
     """
+    time_stamp = utils.local_timestamp()
+
     try: 
        temp=handle['sensor'].temperature() 
     except: 
