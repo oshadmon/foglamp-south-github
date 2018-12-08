@@ -32,7 +32,7 @@ def _to_signed(num:int=0)->int:
         num -= 0x10000
     return num
 
-class GetData:
+class INA219DataAcquisition:
    def __init__(self): 
       i2c=self.__init_i2c_controller()
       self.slave=self.__i2c_slave_port(i2c) 
@@ -221,7 +221,7 @@ class GetData:
       return raw_current * self._current_lsb
 
 if __name__ == '__main__': 
-   gd=GetData()
-   print("Bus Voltage:   {} V".format(gd.bus_voltage()))
-   print("Shunt Voltage: {} mV".format(gd.shunt_voltage() / 1000))
-   print("Current:       {} mA".format(gd.current_value()))
+   ina=INA219DataAcquisition()
+   print("Bus Voltage:   {} V".format(ina.bus_voltage()))
+   print("Shunt Voltage: {} mV".format(ina.shunt_voltage() / 1000))
+   print("Current:       {} mA".format(ina.current_value()))
