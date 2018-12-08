@@ -114,7 +114,10 @@ class AM2315:
 
 
 if __name__ == '__main__': 
-    gd=AM2315()
+    i2c=I2cController()
+    i2c.set_retry_count(1)
+    i2c.configure('ftdi://ftdi:232h:FT2BZGR5/')
+    gd=AM2315(i2c)
     print(gd.temperature())
     print(gd.humidity())
 

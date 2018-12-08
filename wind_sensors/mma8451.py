@@ -100,5 +100,8 @@ class MMA8451:
         return x, y, z
 
 if __name__ == '__main__': 
-    gd=MMA8451() 
+    i2c=I2cController()
+    i2c.set_retry_count(1)
+    i2c.configure('ftdi://ftdi:232h:FT2BZGR5/')
+    gd=MMA8451(i2c) 
     print(gd.get_values())

@@ -208,9 +208,10 @@ class INA219:
       return raw_current * self._current_lsb
 
 if __name__ == '__main__': 
-
-    while True:
-       gd=INA219()
-       #print("Bus Voltage:   {} V".format(gd.bus_voltage()))
-       #print("Shunt Voltage: {} mV".format(gd.shunt_voltage() / 1000))
-       print("Current:       {} mA".format(gd.current_value()))
+    i2c=I2cController()
+    i2c.set_retry_count(1)
+    i2c.configure('ftdi://ftdi:232h:FT2BZGR5/')
+    gd=INA219(i2c)
+    print("Bus Voltage:   {} V".format(gd.bus_voltage()))
+    print("Shunt Voltage: {} mV".format(gd.shunt_voltage() / 1000))
+    print("Current:       {} mA".format(gd.current_value()))

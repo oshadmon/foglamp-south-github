@@ -7,7 +7,6 @@
 """ Plugin for AM2315 temprature/humidity sensor attached using FTDI breakerboard. """
 
 from datetime import datetime, timezone
-import math
 import copy
 import uuid
 import logging
@@ -18,15 +17,10 @@ from foglamp.services.south import exceptions
 from pyftdi.i2c import I2cController
 
 # Code connecting to MMA8451 
-import os 
-import sys 
-import time
-wind_sensors_get_data=os.path.expanduser(os.path.expandvars('$HOME/foglamp-south-plugin/wind_sensors'))
-sys.path.insert(0, wind_sensors_get_data)
-from i2c     import I2CCommunication
-from am2315  import AM2315
-from ina219  import INA219
-from mma8451 import MMA8451
+from foglamp.plugins.south.wind_sensors import am2315
+from foglamp.plugins.south.wind_sensors import ina219 
+from foglamp.plugins.south.wind_sensors import mma8451
+
 
 
 __author__ = "Ori Shadmon"
@@ -109,9 +103,9 @@ def plugin_init(config):
     i2c.set_retry_count(int(handle['i2c_retry']['value']))
     i2c.configure(handle['ftdi_url']['value'])
 
-    handle['am2315']=AM2315(i2c)
-    handle['ina219']=INA219(i2c)
-    handle['mma8451']=MMA8451(i2c) 
+    handle['am2315']=am2315.AM2315(i2c)
+    handle['ina219']=ina219.INA219(i2c)
+    handle['mma8451']=mma8451.MMA8451(i2c) 
 
     return handle
 
@@ -160,7 +154,6 @@ def call_ina219(handle, time_stamp):
     :return:
        dict object of INA219 data
     """
-
     try: 
        current=handle['ina219'].current_value() 
     except: 
