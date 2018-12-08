@@ -17,11 +17,7 @@ from foglamp.plugins.common import utils
 from foglamp.services.south import exceptions
 
 # Code connecting to MMA8451 
-import os 
-import sys 
-mma8451_get_data=os.path.expanduser(os.path.expandvars('$HOME/foglamp-south-plugin/mma8451'))
-sys.path.insert(0, mma8451_get_data)
-import get_data
+from foglamp.plugins.south.mma8451 import mma8451_data_acquisition
 
 __author__ = "Ori Shadmon"
 __copyright__ = "Copyright (c) 2017 OSIsoft, LLC"
@@ -90,7 +86,7 @@ def plugin_init(config):
     Raises:
     """
     handle = copy.deepcopy(config)
-    handle['sensor']=get_data.GetData()
+    handle['sensor']=mma8451_data_acquisition.MMA8451DataAcquisition()
     return handle
 
 

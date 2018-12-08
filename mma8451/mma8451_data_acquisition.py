@@ -28,7 +28,7 @@ RANGE_8G         = 0b10   # +/- 8g
 RANGE_4G         = 0b01   # +/- 4g (default value)
 RANGE_2G         = 0b00   # +/- 2g
 
-class GetData: 
+class MMA8451DataAcquisition: 
     def __init__(self): 
         i2c=self.__init_i2c_controller() 
         #self.slave=self.__i2c_slave_port(i2c) 
@@ -114,5 +114,5 @@ class GetData:
         return x, y, z
 
 if __name__ == '__main__': 
-    gd=GetData() 
-    print(gd.get_values())
+    mma8451=MMA8451DataAcquisition()
+    print(mma8451.get_values())
