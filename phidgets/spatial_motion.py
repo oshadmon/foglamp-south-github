@@ -22,6 +22,14 @@ spatial.saveMagnetometerCorrectionParameters()
 spatial.zeroGyro()
 
 accelerometer = Accelerometer()
+accelerometer.setDeviceSerialNumber(561266)
+accelerometer.setHubPort(4)
+accelerometer.setIsHubPortDevice(False)
+accelerometer.setChannel(0)
+accelerometer.openWaitForAttachment(5000)
+
+try: 
+   accelerometer.
 https://www.phidgets.com/?tier=3&catid=10&pcid=8&prodid=975
 
 
