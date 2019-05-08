@@ -51,7 +51,16 @@ _DEFAULT_CONFIG = {
         'order': '2',
         'displayName': 'Asset Name Prefix'
     },
-    '
+    'humidTempPort': {
+        'description': 'Phidget Hub Port for humidTemp sensor', 
+        'type': 'string', 
+        'default': '5', 
+        'order': '3', 
+        'displayName': 'Humidity/Temperature Port'
+    },
+    'tempAssetName': {
+
+    }
 
 
 }
