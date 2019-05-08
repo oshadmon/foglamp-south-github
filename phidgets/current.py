@@ -20,6 +20,5 @@ try:
    ch.getCurrent() 
 except Exception as e: 
     pass 
-
-time.sleep(5) 
+time.sleep(2) 
 print(ch.getCurrent())
