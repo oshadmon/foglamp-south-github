@@ -32,28 +32,95 @@ __version__ = "${VERSION}"
 
 _DEFAULT_CONFIG = {
     'plugin': {
-        'description': 'Wind Turbine Poll Plugin',
+        'description': 'SLTC Poll Plugin',
         'type': 'string',
-        'default': 'wind_turbine',
+        'default': 'sltc',
         'readonly': 'true'
     },
-    'serialNum': {
-        'description': 'Phidget Hub Serial Number', 
-        'type': 'string', 
-        'default': '516266',
-        'order': 1, 
-        'displayName': 'Phidget Hub Serial Number'
+    'hubSN': {
+        'description': 'VINT Hub Serial Number',
+        'type': 'string',
+        'default': '538230',
+        'order': '1',
+        'displayName': 'VINT Hub SN'
     },
-     'assetPrefix': {
+    'assetPrefix': {
         'description': 'Prefix of asset name',
         'type': 'string',
-        'default': 'wind_turbine/',
+        'default': 'sltc/',
         'order': '2',
         'displayName': 'Asset Name Prefix'
     },
-    '
-
-
+    'tempHumPort': {
+        'description': 'VINT Hub port of temperature/humidity sensor',
+        'type': 'string',
+        'default': '2',
+        'order': '3',
+        'displayName': 'Humidity/Temperature Port'
+    },
+    'tempHumAssetName': {
+        'description': 'Humidity/Temperature sensor asset name',
+        'type': 'string',
+        'default': 'weather',
+        'order': '4',
+        'displayName': 'Humidity/Temperature Asset Name'
+    },
+    'soundPort': {
+        'description': 'VINT Hub port of sound sensor',
+        'type': 'string',
+        'default': '0',
+        'order': '5',
+        'displayName': 'Sound Port'
+    },
+    'soundAssetName': {
+        'description': 'Sound sensor asset name',
+        'type': 'string',
+        'default': 'sound',
+        'order': '6',
+        'displayName': 'Sound Asset Name'
+    },
+    'lightPort': {
+        'description': 'VINT Hub port of light sensor',
+        'type': 'string',
+        'default': '1',
+        'order': '7',
+        'displayName': 'Light Port'
+    },
+    'lightAssetName': {
+        'description': 'Light sensor asset name',
+        'type': 'string',
+        'default': 'light',
+        'order': '8',
+        'displayName': 'Light Asset Name'
+    },
+    'motionPort': {
+        'description': 'VINT Hub port of motion sensor',
+        'type': 'string',
+        'default': '5',
+        'order': '9',
+        'displayName': 'Motion Port'
+    },
+    'motionAssetName': {
+        'description': 'Motion sensor asset name',
+        'type': 'string',
+        'default': 'motion',
+        'order': '10',
+        'displayName': 'Motion Asset Name'
+    },
+    'airPort': {
+        'description': 'VINT Hub port of Air Quality sensor',
+        'type': 'string',
+        'default': '3',
+        'order': '11',
+        'displayName': 'Air Quality Port'
+    },
+    'airAssetName': {
+        'description': 'Air Quality sensor asset name',
+        'type': 'string',
+        'default': 'air',
+        'order': '12',
+        'displayName': 'Air Quality Asset Name'
+    }
 }
 
 _LOGGER = logger.setup(__name__, level=logging.INFO)
