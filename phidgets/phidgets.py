@@ -51,7 +51,7 @@ def plugin_init(config):
       data['temp'].setDeviceSerialNumber(561266)
       data['temp'].setHubPort(5)
       data['temp'].setIsHubPortDevice(False)
-      data'[temp'].setChannel(0)
+      data['temp'].setChannel(0)
 
       # Current 
       data['current'] = CurrentInput()
@@ -116,7 +116,7 @@ def plugin_pull(handle):
       data.append({
          'asset': 'current_input', 
          'timestamp': timestamp, 
-         'key': str(uuid.uuid4())
+         'key': str(uuid.uuid4()),
          'readings': { 
             "current_input": data['current'].getCurrent() 
          }
