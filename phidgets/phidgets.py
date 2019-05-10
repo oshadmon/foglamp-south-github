@@ -23,6 +23,69 @@ __license__ = "Apache 2.0"
 __version__ = "${VERSION}"
 
 _DEFAULT_CONFIG = {
+   'plugin': { 
+      'description': 'Phidget Poll Plugin for Wind Turbine', 
+      'type': 'string', 
+      'default': 'wt_phidgets', 
+      'readonly': 'true'
+   },
+   'assetPrefix': { 
+      'description': 'Prefix asset name', 
+      'type': 'string', 
+      'default': 'wt_phidgets/', 
+      'displayName': 'Asset Name Prefix', 
+      'order': '1'
+   }, 
+   'hubSerialNum': {
+       'descrption': 'Phidget Hub Serial Number', 
+       'default': '538854', 
+       'displayName': 'Phidget Hub Serial', 
+       'order': '2'
+   },
+   'humTempAssetName': {
+      'description': 'Humidity/Temperature sensor asset name', 
+      'type': 'string', 
+      'default': 'weather', 
+      'displayName': 'Humidity/Temperature Asset Name', 
+      'order': 3
+   },
+   'humTempPort': { 
+      'description': 'Humidity/Temperature port number', 
+      'type': 'string', 
+      'default': '0', 
+      'displayName': 'Humidity/Temperature Port'
+      'order': '4', 
+   },
+   'currentAssetName': {
+      'description': 'Current Asset Name': 
+      'type': 'string', 
+      'default': 'current', 
+      'displayName': 'Current Asset Name', 
+      'order': '5'
+   }, 
+   'currentPort': {
+      'description': 'Current port number', 
+      'type': 'string', 
+      'default': '3', 
+      'displayName': 'Current Port', 
+      'order': '6'
+   }, 
+   'spatialAssetName': { 
+      'description': 'Asset name for spatial sensors (accelerometer, gyroscope and magnetometer)'
+      'type': 'string', 
+      'default': 'spatial', 
+      'displayName': 'Spatial Sensor', 
+      'order': '7'
+   },
+   'spatialPort': {
+      'description': 'Spatial port number', 
+      'type': 'string', 
+      'default': '2', 
+      'displayName': 'Spatial Port', 
+      'order':'8'
+   }
+      
+
 } 
 
 def plugin_init(config):
@@ -44,43 +107,43 @@ def plugin_init(config):
       """ 
       # humidity 
       data['humidity'] = HumiditySensor()
-      data['humidity'].setDeviceSerialNumber(561266)
-      data['humidity'].setHubPort(5)
+      data['humidity'].setDeviceSerialNumber(int(data['hubSerialNum']['value']))
+      data['humidity'].setHubPort(int(data['humTempPort']['value']))
       data['humidity'].setIsHubPortDevice(False)
       data['humidity'].setChannel(0)
 
       # temperature 
       data['temp'] = TemperatureSensor()
-      data['temp'].setDeviceSerialNumber(561266)
-      data['temp'].setHubPort(5)
+      data['temp'].setDeviceSerialNumber(int(data['hubSerialNum']['value']))
+      data['temp'].setHubPort(int(data['humTempPort']['value']))
       data['temp'].setIsHubPortDevice(False)
       data['temp'].setChannel(0)
 
       # Current 
       data['current'] = CurrentInput()
-      data['current'].setDeviceSerialNumber(561266)
-      data['current'].setHubPort(3)
+      data['current'].setDeviceSerialNumber(int(data['hubSerialNum']['value']))
+      data['current'].setHubPort(int(data['currentPort']['value']))
       data['current'].setIsHubPortDevice(False)
       data['current'].setChannel(0)
 
       # accelerometer 
       data['accelerometer'] = Accelerometer()
-      data['accelerometer'].setDeviceSerialNumber(561266)
-      data['accelerometer'].setHubPort(4)
+      data['accelerometer'].setDeviceSerialNumber(int(data['hubSerialNum']['value']))
+      data['accelerometer'].setHubPort(int(data['spatialPort']['value']))
       data['accelerometer'].setIsHubPortDevice(False)
       data['accelerometer'].setChannel(0)
       
       # gyroscope 
       data['gyroscope'] = Gyroscope()
-      data['gyroscope'].setDeviceSerialNumber(561266)
-      data['gyroscope'].setHubPort(4)
+      data['gyroscope'].setDeviceSerialNumber(int(data['hubSerialNum']['value']))
+      data['gyroscope'].setHubPort(int(data['spatialPort']['value']))
       data['gyroscope'].setIsHubPortDevice(False)
       data['gyroscope'].setChannel(0)
 
       # magnetometer 
       data['magnetometer']= Magnetometer()
-      data['magnetometer'].setDeviceSerialNumber(561266)
-      data['magnetometer'].setHubPort(4)
+      data['magnetometer'].setDeviceSerialNumber(int(data['hubSerialNum']['value']))
+      data['magnetometer'].setHubPort(int(data['spatialPort']['value']))
       data['magnetometer'].setIsHubPortDevice(False)
       data['magnetometer'].setChannel(0)
 
@@ -177,47 +240,31 @@ def plugin_pull(handle):
          -readings {} 
       """ 
       data.append({
-         'asset': 'temperature_and_humidity', 
+         'asset': "{}{}".format(handle['assetPrefix']['value'], handle['humTempAssetName']['value'])
          'timestamp': timestamp,
          'key': str(uuid.uuid4()), 
          'readings': { 
-            "humidity": data['humidity'].getHumidity(), 
-            "temperature": data['temp'].getTemperature()
+            "humidity": handle['humidity'].getHumidity(), 
+            "temperature": handle['temp'].getTemperature()
          }
       })
 
       data.append({
-         'asset': 'current_input', 
+         'asset': "{}{}".format(handle['assetPrefix']['value'], handle['currentAssetName']['value'])
          'timestamp': timestamp, 
          'key': str(uuid.uuid4()),
          'readings': { 
-            "current_input": data['current'].getCurrent() 
+            "current_input": hanle['current'].getCurrent() 
          }
       }) 
 
       data.append({
-          'asset': 'accelerometer', 
+          'asset': "{}{}".format(handle['assetPrefix']['value'], handle['spatialAssetName']['value'])
           'timestamp': timestamp, 
           'key': str(uuid.uuid4()), 
           'readings':{ 
-              'accelerometer': data['accelerometer'].getAcceleration()
-          }
-      }) 
-
-      data.append({
-          'asset': 'gyroscope',
-          'timestamp': timestamp,
-          'key': str(uuid.uuid4()),
-          'readings':{
-              'gyroscope': data['gyroscope'].getAngularRate()
-          }
-      })
-
-      data.append({
-          'asset': 'magnetometer',
-          'timestamp': timestamp,
-          'key': str(uuid.uuid4()),
-          'readings':{
+              'accelerometer': data['accelerometer'].getAcceleration(), 
+              'gyroscope': data['gyroscope'].getAngularRate(),
               'magnetometer': data['magnetometer'].getMagneticField()
           }
       })
