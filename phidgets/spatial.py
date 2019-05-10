@@ -7,7 +7,6 @@ import time
 from Phidget22.Devices.Accelerometer import *
 from Phidget22.Devices.Gyroscope import * 
 from Phidget22.Devices.Magnetometer import * 
-from Phidget22.Devices.TemperatureSensor import *
 from Phidget22.PhidgetException import *
 from Phidget22.Phidget import *
 
