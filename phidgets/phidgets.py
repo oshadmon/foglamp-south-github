@@ -9,6 +9,7 @@ from foglamp.services.south import exceptions
 
 from Phidget22.Devices.Accelerometer import *
 from Phidget22.Devices.CurrentInput import *
+from Phidget22.Devices.Encoder import *
 from Phidget22.Devices.Gyroscope import *
 from Phidget22.Devices.HumiditySensor import *
 from Phidget22.Devices.Magnetometer import *
@@ -83,9 +84,21 @@ _DEFAULT_CONFIG = {
       'default': '2', 
       'displayName': 'Spatial Port', 
       'order':'8'
+   },
+   'encoderAssetName': {
+      'description': 'Encoder Asset Name', 
+      'type': 'string', 
+      'default': 'encoder', 
+      'displayName': 'Encoder Asset Name', 
+      'order': '9'
+   },
+   'encoderPort': {
+      'description': 'Encoder Port', 
+      'type': 'string', 
+      'default': '1', 
+      'displayName': 'Encoder Port', 
+      'order': '10'
    }
-      
-
 } 
 
 def plugin_init(config):
@@ -147,6 +160,12 @@ def plugin_init(config):
       data['magnetometer'].setIsHubPortDevice(False)
       data['magnetometer'].setChannel(0)
 
+      data['encoder'] = Encoder() 
+      data['encoder'].setDeviceSerialNumber(int(data['hubSerialNum']['value']))
+      data['encoder'].setHubPort(int(data['encoderPort']['value']))
+      data['encoder'].setIsHubPortDevice(False)
+      data['encoder'].setChannel(0)
+
       # for each sensor do try/catch (pass) on the first get
       data['humidity'].openWaitForAttachment(5000)
       try: 
@@ -162,16 +181,21 @@ def plugin_init(config):
 
       data['current'].openWaitForAttachment(5000)
       try: 
-         ch.getCurrent()
+         data['current'].getCurrent()
       except Exception as e: 
          pass 
 
+      data['encoder'].openWaitForAttachment(5000)
+      try: 
+         data['encoder'].getPosition()
+      except Exception as e: 
+          pass 
       i = 0
       exception = "" 
       data['accelerometer'].openWaitForAttachment(5000)
       while i < 120: 
          try:             
-            accelerometer.getAcceleration() 
+            data['accelerometer'].getAcceleration() 
          except Exception as e: 
             time.sleep(1)
             i+=1
@@ -220,6 +244,11 @@ def plugin_init(config):
       raise ex 
    return data 
 
+def __get_encoder_value(handle): 
+   current = handle['encoder'].getPosition()
+   rpm = (current - handle['encoderValue']) / 1200
+   return rpm  
+
 def plugin_pull(handle): 
    """ Extract data from sensors and return in a JSON document as a Python dict. 
        Available for poll-mode only. 
@@ -230,6 +259,7 @@ def plugin_pull(handle):
    Raises: 
       TimeoutError 
    """ 
+   handle['encoderValue'] = 0 # init encoder value 
    try: 
       timestamp = utils.local_timestamp()
       data = list()
@@ -268,6 +298,17 @@ def plugin_pull(handle):
               'magnetometer': data['magnetometer'].getMagneticField()
           }
       })
+
+      handle['encoderValue'] = __get_encoder_value(handle) 
+      data.append({
+          'asset': "{}{}".format(handle['assetPrefix']['value'], handle['encoderAssetName']['value'])
+          'timestamp': timestamp,
+          'key': str(uuid.uuid4()),
+          'readings':{
+              'encoder': handle['encoderValue'] 
+          }
+      })
+
 
 
    except (Exception, RuntimeError) as ex:
