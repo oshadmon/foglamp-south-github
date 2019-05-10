@@ -7,8 +7,11 @@ from foglamp.common import logger
 from foglamp.plugins.common import utils
 from foglamp.services.south import exceptions
 
+from Phidget22.Devices.Accelerometer import *
 from Phidget22.Devices.CurrentInput import *
+from Phidget22.Devices.Gyroscope import *
 from Phidget22.Devices.HumiditySensor import *
+from Phidget22.Devices.Magnetometer import *
 from Phidget22.Devices.TemperatureSensor import *
 from Phidget22.PhidgetException import *
 from Phidget22.Phidget import *
@@ -60,6 +63,27 @@ def plugin_init(config):
       data['current'].setIsHubPortDevice(False)
       data['current'].setChannel(0)
 
+      # accelerometer 
+      data['accelerometer'] = Accelerometer()
+      data['accelerometer'].setDeviceSerialNumber(561266)
+      data['accelerometer'].setHubPort(4)
+      data['accelerometer'].setIsHubPortDevice(False)
+      data['accelerometer'].setChannel(0)
+      
+      # gyroscope 
+      data['gyroscope'] = Gyroscope()
+      data['gyroscope'].setDeviceSerialNumber(561266)
+      data['gyroscope'].setHubPort(4)
+      data['gyroscope'].setIsHubPortDevice(False)
+      data['gyroscope'].setChannel(0)
+
+      # magnetometer 
+      data['magnetometer']= Magnetometer()
+      data['magnetometer'].setDeviceSerialNumber(561266)
+      data['magnetometer'].setHubPort(4)
+      data['magnetometer'].setIsHubPortDevice(False)
+      data['magnetometer'].setChannel(0)
+
       # for each sensor do try/catch (pass) on the first get
       data['humidity'].openWaitForAttachment(5000)
       try: 
@@ -78,6 +102,55 @@ def plugin_init(config):
          ch.getCurrent()
       except Exception as e: 
          pass 
+
+      i = 0
+      exception = "" 
+      data['accelerometer'].openWaitForAttachment(5000)
+      while i < 120: 
+         try:             
+            accelerometer.getAcceleration() 
+         except Exception as e: 
+            time.sleep(1)
+            i+=1
+            exception = e
+         else: 
+            break 
+         if i == 120: 
+            _LOGGER.exception("Failed to start accelerometer sensor... {}".format(exception))
+            raise ex
+      
+      i = 0
+      exception = ""
+      data['gyroscope'].openWaitForAttachment(5000)
+      while i < 120:
+         try:
+            data['gyroscope'].getAngularRate()
+         except Exception as e:
+            time.sleep(1)
+            i+=1
+            exception = e
+         else:
+            break
+         if i == 120:
+            _LOGGER.exception("Failed to start gyroscope sensor... {}".format(exception))
+            raise ex
+
+      i = 0
+      exception = ""
+      data['magnetometer'].openWaitForAttachment(5000)
+      while i < 120:
+         try:
+            data['magnetometer'].`getMagneticField()
+         except Exception as e:
+            time.sleep(1)
+            i+=1
+            exception = e
+         else:
+            break
+         if i == 120:
+            _LOGGER.exception("Failed to start magnetometer sensor... {}".format(exception))
+            raise ex
+
 
    except Exception as e: 
       _LOGGER.exception("SLTC exception: {}".format(str(ex)))
@@ -121,6 +194,34 @@ def plugin_pull(handle):
             "current_input": data['current'].getCurrent() 
          }
       }) 
+
+      data.append({
+          'asset': 'accelerometer', 
+          'timestamp': timestamp, 
+          'key': str(uuid.uuid4()), 
+          'readings':{ 
+              'accelerometer': data['accelerometer'].getAcceleration()
+          }
+      }) 
+
+      data.append({
+          'asset': 'gyroscope',
+          'timestamp': timestamp,
+          'key': str(uuid.uuid4()),
+          'readings':{
+              'gyroscope': data['gyroscope'].getAngularRate()
+          }
+      })
+
+      data.append({
+          'asset': 'magnetometer',
+          'timestamp': timestamp,
+          'key': str(uuid.uuid4()),
+          'readings':{
+              'magnetometer': data['magnetometer'].getMagneticField()
+          }
+      })
+
 
    except (Exception, RuntimeError) as ex:
       _LOGGER.exception("SLTC exception: {}".format(str(ex)))
