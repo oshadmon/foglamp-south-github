@@ -12,8 +12,8 @@ from Phidget22.Phidget import *
 
 # code for accelerometer sensor 
 accelerometer = Accelerometer() 
-accelerometer.setDeviceSerialNumber(561266)
-accelerometer.setHubPort(4)
+accelerometer.setDeviceSerialNumber(538854)
+accelerometer.setHubPort(2)
 accelerometer.setIsHubPortDevice(False)
 accelerometer.setChannel(0)
 accelerometer.openWaitForAttachment(5000)
@@ -34,8 +34,8 @@ while i < 120:
 print(accelerometer.getAcceleration()) 
 
 gyroscope = Gyroscope() 
-gyroscope.setDeviceSerialNumber(561266)
-gyroscope.setHubPort(4)
+gyroscope.setDeviceSerialNumber(538854)
+gyroscope.setHubPort(2)
 gyroscope.setIsHubPortDevice(False)
 gyroscope.setChannel(0)
 gyroscope.openWaitForAttachment(5000)
@@ -52,11 +52,14 @@ while i < 120:
    if i == 120: 
        # exit 
        pass 
-print(gyroscope.getAngularRate())
+x, y, z = gyroscope.getAngularRate()
+print(x, type(x)) 
+print(y, type(y)) 
+print(z, type(z))
 
 magnetometer = Magnetometer() 
-magnetometer.setDeviceSerialNumber(561266)
-magnetometer.setHubPort(4)
+magnetometer.setDeviceSerialNumber(538854)
+magnetometer.setHubPort(2)
 magnetometer.setIsHubPortDevice(False)
 magnetometer.setChannel(0)
 magnetometer.openWaitForAttachment(5000)

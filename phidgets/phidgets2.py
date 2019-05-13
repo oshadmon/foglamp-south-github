@@ -7,17 +7,21 @@
 """ Module for Phidget poll mode plugin """
 
 import copy
-import uuid
 import logging
-
 import math
+import time 
+import uuid 
+
 from foglamp.common import logger
 from foglamp.plugins.common import utils
 from foglamp.services.south import exceptions
 
+from Phidget22.Devices.Accelerometer import *
 from Phidget22.Devices.CurrentInput import * 
 from Phidget22.Devices.Encoder import *
+from Phidget22.Devices.Gyroscope import *
 from Phidget22.Devices.HumiditySensor import *
+from Phidget22.Devices.Magnetometer import *
 from Phidget22.Devices.TemperatureSensor import *
 from Phidget22.PhidgetException import *
 from Phidget22.Phidget import *
@@ -78,20 +82,34 @@ _DEFAULT_CONFIG = {
         'order': '6',
         'displayName': 'Current Asset Name'
     },
-    'encoderPort': {
-        'description': 'VINT Hub port of encoder sensor',
-        'type': 'string',
-        'default': '1',
-        'order': '7',
-        'displayName': 'Encoder Port'
+    #'encoderPort': {
+    #    'description': 'VINT Hub port of encoder sensor',
+    #    'type': 'string',
+    #    'default': '1',
+    #    'order': '7',
+    #    'displayName': 'Encoder Port'
+    #},
+    #'encoderAssetName': {
+    #    'description': 'Encoder sensor asset name',
+    #    'type': 'string',
+    #    'default': 'encoder',
+    #    'order': '8',
+    #    'displayName': 'Encoder Asset Name'
+    #},
+    'spatialPort': {
+        'description': 'VINT Hub port of encoder sensor', 
+        'type': 'string', 
+        'default': '2', 
+        'order': '9', 
+        'displayName': 'Spatial Port'
     },
-    'encoderAssetName': {
-        'description': 'Encoder sensor asset name',
+    'spatialAssetName': {
+        'description': 'Spatial sensors asset name', 
         'type': 'string',
-        'default': 'encoder',
-        'order': '8',
-        'displayName': 'Encoder Asset Name'
-    },
+        'default': 'spatial', 
+        'order': '10', 
+        'displayName': 'Spatial asset name'
+    }
 
 }
 
@@ -128,7 +146,9 @@ def plugin_init(config):
         data['humidity'] = HumiditySensor()
         data['temperature'] = TemperatureSensor()
         data['current'] = CurrentInput() 
-        data['encoder'] = Encoder()
+        #data['encoder'] = Encoder()
+        data['acceleration'] = Accelerometer()
+        data['gyroscope'] = Gyroscope() 
 
         data['humidity'].setDeviceSerialNumber(int(data['hubSN']['value']))
         data['humidity'].setHubPort(int(data['tempHumPort']['value']))
@@ -145,15 +165,27 @@ def plugin_init(config):
         data['current'].setIsHubPortDevice(False)
         data['current'].setChannel(0)
 
-        data['encoder'].setDeviceSerialNumber(int(data['hubSN']['value']))
-        data['encoder'].setHubPort(int(data['currentPort']['value']))
-        data['encoder'].setIsHubPortDevice(False)
-        data['encoder'].setChannel(0)
+        #data['encoder'].setDeviceSerialNumber(int(data['hubSN']['value']))
+        #data['encoder'].setHubPort(int(data['currentPort']['value']))
+        #data['encoder'].setIsHubPortDevice(False)
+        #data['encoder'].setChannel(0)
+
+        data['acceleration'].setDeviceSerialNumber(int(data['hubSN']['value']))
+        data['acceleration'].setHubPort(int(data['spatialPort']['value']))
+        data['acceleration'].setIsHubPortDevice(False)
+        data['acceleration'].setChannel(0)
+
+        data['gyroscope'].setDeviceSerialNumber(int(data['hubSN']['value']))
+        data['gyroscope'].setHubPort(int(data['spatialPort']['value']))
+        data['gyroscope'].setIsHubPortDevice(False)
+        data['gyroscope'].setChannel(0)
 
         data['humidity'].openWaitForAttachment(5000)
         data['temperature'].openWaitForAttachment(5000)
         data['current'].openWaitForAttachment(5000)
-        data['encoder'].openWaitForAttachment(5000)
+        #data['encoder'].openWaitForAttachment(5000)
+        data['acceleration'].openWaitForAttachment(5000)
+        data['gyroscope'].openWaitForAttachment(5000)
 
         try:
             data['humidity'].getHumidity()
@@ -168,12 +200,34 @@ def plugin_init(config):
         except Exception as e: 
             pass 
 
-        i = 0 
-        while i < 120 
-        try:
-            data['encoder'].getPosition()
-        except Exception as e:
-            pass
+        #i = 0 
+        #while i < 120:
+        #    try:
+        #        data['encoder'].getPosition()
+        #    except Exception as e:
+        #        pass
+        #    else: 
+        #        break 
+
+        i = 0
+        while i < 120:
+            try: 
+                data['acceleration'].getAcceleration()
+            except Exception as e:
+                time.sleep(1)
+                i+=1
+            else:
+                break
+
+        i = 0
+        while i < 120:
+            try:
+                data['gyroscope'].getAngularRate()
+            except Exception as e:
+                time.sleep(1)
+                i+=1
+            else:
+                break
 
     except Exception as ex:
         _LOGGER.exception("Phidget exception: {}".format(str(ex)))
@@ -215,15 +269,26 @@ def plugin_poll(handle):
                 "current": handle['current'].getCurrent()
             }
         })
+        #data.append({
+        #    'asset': '{}{}'.format(handle['assetPrefix']['value'], handle['encoderAssetName']['value']),
+        #    'timestamp': time_stamp,
+        #    'key': str(uuid.uuid4()),
+        #    'readings': {
+        #        "current": handle['encoder'].getPosition()/1200 # number of reps
+        #    }
+        #})
+
+        x, y, z = handle['acceleration'].getAcceleration()
         data.append({
-            'asset': '{}{}'.format(handle['assetPrefix']['value'], handle['encoderAssetName']['value']),
+            'asset': '{}{}/{}'.format(handle['assetPrefix']['value'], handle['spatialAssetName']['value'], 'acceleration'),
             'timestamp': time_stamp,
             'key': str(uuid.uuid4()),
             'readings': {
-                "current": handle['encoder'].getPosition()/1200 # number of reps
+                "acceleration-x": x,
+                "acceleration-y": y, 
+                "acceleration-z": z
             }
         })
-
 
     except (Exception, RuntimeError) as ex:
         _LOGGER.exception("Phidget exception: {}".format(str(ex)))
