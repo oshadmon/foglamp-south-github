@@ -10,6 +10,7 @@ from Phidget22.Devices.Magnetometer import *
 from Phidget22.PhidgetException import *
 from Phidget22.Phidget import *
 
+"""
 # code for accelerometer sensor 
 accelerometer = Accelerometer() 
 accelerometer.setDeviceSerialNumber(538854)
@@ -32,7 +33,7 @@ while i < 120:
        pass 
 
 print(accelerometer.getAcceleration()) 
-
+"""
 gyroscope = Gyroscope() 
 gyroscope.setDeviceSerialNumber(538854)
 gyroscope.setHubPort(2)
@@ -52,11 +53,12 @@ while i < 120:
    if i == 120: 
        # exit 
        pass 
+print(gyroscope.getAngularRate.x())
 x, y, z = gyroscope.getAngularRate()
 print(x, type(x)) 
 print(y, type(y)) 
 print(z, type(z))
-
+"""
 magnetometer = Magnetometer() 
 magnetometer.setDeviceSerialNumber(538854)
 magnetometer.setHubPort(2)
@@ -77,4 +79,4 @@ while i < 120:
        # exit
        pass
 print(magnetometer.getMagneticField()) 
-
+"""
