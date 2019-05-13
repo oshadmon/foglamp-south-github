@@ -82,20 +82,20 @@ _DEFAULT_CONFIG = {
         'order': '6',
         'displayName': 'Current Asset Name'
     },
-    #'encoderPort': {
-    #    'description': 'VINT Hub port of encoder sensor',
-    #    'type': 'string',
-    #    'default': '1',
-    #    'order': '7',
-    #    'displayName': 'Encoder Port'
-    #},
-    #'encoderAssetName': {
-    #    'description': 'Encoder sensor asset name',
-    #    'type': 'string',
-    #    'default': 'encoder',
-    #    'order': '8',
-    #    'displayName': 'Encoder Asset Name'
-    #},
+    'encoderPort': {
+        'description': 'VINT Hub port of encoder sensor',
+        'type': 'string',
+        'default': '1',
+        'order': '7',
+        'displayName': 'Encoder Port'
+    },
+    'encoderAssetName': {
+        'description': 'Encoder sensor asset name',
+        'type': 'string',
+        'default': 'encoder',
+        'order': '8',
+        'displayName': 'Encoder Asset Name'
+    },
     'spatialPort': {
         'description': 'VINT Hub port of encoder sensor', 
         'type': 'string', 
@@ -110,7 +110,6 @@ _DEFAULT_CONFIG = {
         'order': '10', 
         'displayName': 'Spatial asset name'
     }
-
 }
 
 _LOGGER = logger.setup(__name__, level=logging.INFO)
@@ -146,10 +145,11 @@ def plugin_init(config):
         data['humidity'] = HumiditySensor()
         data['temperature'] = TemperatureSensor()
         data['current'] = CurrentInput() 
-        #data['encoder'] = Encoder()
+        data['encoder'] = Encoder()
         data['acceleration'] = Accelerometer()
         data['gyroscope'] = Gyroscope() 
         data['magnetometer'] = Magnetometer()
+        data['last_count'] = 0
 
         data['humidity'].setDeviceSerialNumber(int(data['hubSN']['value']))
         data['humidity'].setHubPort(int(data['tempHumPort']['value']))
@@ -166,10 +166,10 @@ def plugin_init(config):
         data['current'].setIsHubPortDevice(False)
         data['current'].setChannel(0)
 
-        #data['encoder'].setDeviceSerialNumber(int(data['hubSN']['value']))
-        #data['encoder'].setHubPort(int(data['currentPort']['value']))
-        #data['encoder'].setIsHubPortDevice(False)
-        #data['encoder'].setChannel(0)
+        data['encoder'].setDeviceSerialNumber(int(data['hubSN']['value']))
+        data['encoder'].setHubPort(int(data['encoderPort']['value']))
+        data['encoder'].setIsHubPortDevice(False)
+        data['encoder'].setChannel(0)
 
         data['acceleration'].setDeviceSerialNumber(int(data['hubSN']['value']))
         data['acceleration'].setHubPort(int(data['spatialPort']['value']))
@@ -189,7 +189,7 @@ def plugin_init(config):
         data['humidity'].openWaitForAttachment(5000)
         data['temperature'].openWaitForAttachment(5000)
         data['current'].openWaitForAttachment(5000)
-        #data['encoder'].openWaitForAttachment(5000)
+        data['encoder'].openWaitForAttachment(5000)
         data['acceleration'].openWaitForAttachment(5000)
         data['gyroscope'].openWaitForAttachment(5000)
         data['magnetometer'].openWaitForAttachment(5000)
@@ -207,14 +207,15 @@ def plugin_init(config):
         except Exception as e: 
             pass 
 
-        #i = 0 
-        #while i < 120:
-        #    try:
-        #        data['encoder'].getPosition()
-        #    except Exception as e:
-        #        pass
-        #    else: 
-        #        break 
+        i = 0 
+        while i < 120:
+            try:
+                data['encoder'].getPosition()
+            except Exception as e:
+                time.sleep(1)
+                i+=1 
+            else: 
+                break 
 
         i = 0
         while i < 120:
@@ -286,14 +287,16 @@ def plugin_poll(handle):
                 "current": handle['current'].getCurrent()
             }
         })
-        #data.append({
-        #    'asset': '{}{}'.format(handle['assetPrefix']['value'], handle['encoderAssetName']['value']),
-        #    'timestamp': time_stamp,
-        #    'key': str(uuid.uuid4()),
-        #    'readings': {
-        #        "current": handle['encoder'].getPosition()/1200 # number of reps
-        #    }
-        #})
+
+        handle['last_count'] = (handle['encoder'].getPosition() - handle['last_count'])/1200
+        data.append({
+            'asset': '{}{}'.format(handle['assetPrefix']['value'], handle['encoderAssetName']['value']),
+            'timestamp': time_stamp,
+            'key': str(uuid.uuid4()),
+            'readings': {
+                "encoder": handle['last_count'] # number of reps
+            }
+        })
 
         x, y, z = handle['acceleration'].getAcceleration()
         data.append({
@@ -304,6 +307,30 @@ def plugin_poll(handle):
                 "acceleration-x": x,
                 "acceleration-y": y, 
                 "acceleration-z": z
+            }
+        })
+
+        x, y, z = handle['gyroscope'].getAngularRate()
+        data.append({
+            'asset': '{}{}/{}'.format(handle['assetPrefix']['value'], handle['spatialAssetName']['value'], 'gyroscope'),
+            'timestamp': time_stamp,
+            'key': str(uuid.uuid4()),
+            'readings': {
+                "gyroscope-x": x,
+                "gyroscope-y": y,
+                "gyroscope-z": z
+            }
+        })
+
+        x, y, z = handle['magnetometer'].getMagneticField()
+        data.append({
+            'asset': '{}{}/{}'.format(handle['assetPrefix']['value'], handle['spatialAssetName']['value'], 'magnetometer'),
+            'timestamp': time_stamp,
+            'key': str(uuid.uuid4()),
+            'readings': {
+                "magnetometer-x": x,
+                "magnetometer-y": y,
+                "magnetometer-z": z
             }
         })
 

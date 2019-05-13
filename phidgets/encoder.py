@@ -20,6 +20,7 @@ previous=0
 current=0
 while True:
   current=ch.getPosition()
+  print(current)
   rpm = (current - previous)/1200
   print(rpm)
   previous = current

@@ -53,8 +53,6 @@ while i < 120:
    if i == 120: 
        # exit 
        pass 
-print(gyroscope.getAngularRate.x())
-x, y, z = gyroscope.getAngularRate()
 print(x, type(x)) 
 print(y, type(y)) 
 print(z, type(z))
@@ -79,4 +77,4 @@ while i < 120:
        # exit
        pass
 print(magnetometer.getMagneticField()) 
-"""
+getAngularRate()"""
