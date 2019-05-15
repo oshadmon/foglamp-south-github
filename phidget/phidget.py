@@ -159,14 +159,14 @@ _DEFAULT_CONFIG = {
         'order': '16', 
         'displayName': 'Spatial Port'
     },
-    'accelerationPoll': {
-        'description': 'Obtain acceleration every nth time the plugin is pulled',
+    'accelerometerPoll': {
+        'description': 'Obtain accelerometer every nth time the plugin is pulled',
         'type': 'integer',
         'default': '1',
         'order': '17',
         'displayName': 'Acceleration Poll'
     },
-    'accelerationEnable': {
+    'accelerometerEnable': {
         'description': 'Enable Acceleration Sensor',
         'type': 'boolean',
         'default': 'true',
@@ -222,7 +222,6 @@ def plugin_info():
         'config': _DEFAULT_CONFIG
     }
 
-
 def plugin_init(config):
     """ Initialise the plugin.
     Args:
@@ -237,7 +236,7 @@ def plugin_init(config):
         data['temperature'] = TemperatureSensor()
         data['current'] = CurrentInput() 
         data['encoder'] = Encoder()
-        data['acceleration'] = Accelerometer()
+        data['accelerometer'] = Accelerometer()
         data['gyroscope'] = Gyroscope() 
         data['magnetometer'] = Magnetometer()
         data['last_count'] = 0
@@ -262,10 +261,10 @@ def plugin_init(config):
         data['encoder'].setIsHubPortDevice(False)
         data['encoder'].setChannel(0)
 
-        data['acceleration'].setDeviceSerialNumber(int(data['hubSN']['value']))
-        data['acceleration'].setHubPort(int(data['spatialPort']['value']))
-        data['acceleration'].setIsHubPortDevice(False)
-        data['acceleration'].setChannel(0)
+        data['accelerometer'].setDeviceSerialNumber(int(data['hubSN']['value']))
+        data['accelerometer'].setHubPort(int(data['spatialPort']['value']))
+        data['accelerometer'].setIsHubPortDevice(False)
+        data['accelerometer'].setChannel(0)
 
         data['gyroscope'].setDeviceSerialNumber(int(data['hubSN']['value']))
         data['gyroscope'].setHubPort(int(data['spatialPort']['value']))
@@ -281,7 +280,7 @@ def plugin_init(config):
         data['temperature'].openWaitForAttachment(5000)
         data['current'].openWaitForAttachment(5000)
         data['encoder'].openWaitForAttachment(5000)
-        data['acceleration'].openWaitForAttachment(5000)
+        data['accelerometer'].openWaitForAttachment(5000)
         data['gyroscope'].openWaitForAttachment(5000)
         data['magnetometer'].openWaitForAttachment(5000)
 
@@ -311,7 +310,7 @@ def plugin_init(config):
         i = 0
         while i < 120:
             try: 
-                data['acceleration'].getAcceleration()
+                data['accelerometer'].getAcceleration()
             except Exception as e:
                 time.sleep(1)
                 i+=1
@@ -341,6 +340,18 @@ def plugin_init(config):
     except Exception as ex:
         _LOGGER.exception("Phidget exception: {}".format(str(ex)))
         raise ex
+
+    # counter to know when to run process 
+    data['tempHumCount'] = 0 
+    data['currentCount'] = 0 
+    data['encoderCount'] = 0 
+    data['accelerometerCount'] = 0 
+    data['gyroscopeCount'] = 0 
+    data['magnetometerCount'] = 0 
+
+    # counter of last encoder value 
+    data['encoderPreviousValue'] = 0 
+
     return data
 
 
@@ -361,72 +372,84 @@ def plugin_poll(handle):
     try:
         time_stamp = utils.local_timestamp()
         data = list()
-        data.append({
-            'asset': '{}{}'.format(handle['assetPrefix']['value'], handle['tempHumAssetName']['value']),
-            'timestamp': time_stamp,
-            'key': str(uuid.uuid4()),
-            'readings': {
-                "temperature": handle['temperature'].getTemperature(), 
-                "humidity": handle['humidity'].getHumidity()
-            }
-        })
-        data.append({
-            'asset': '{}{}'.format(handle['assetPrefix']['value'], handle['currentAssetName']['value']),
-            'timestamp': time_stamp,
-            'key': str(uuid.uuid4()),
-            'readings': {
-                "current": handle['current'].getCurrent()
-            }
-        })
+        if (handle['tempHumEnable']['value'] == 'true' and handle['tempHumCount'] == 0): 
+            data.append({
+                'asset': '{}{}'.format(handle['assetPrefix']['value'], handle['tempHumAssetName']['value']),
+                'timestamp': time_stamp,
+                'key': str(uuid.uuid4()),
+                'readings': {
+                    "temperature": handle['temperature'].getTemperature(),
+                    "humidity": handle['humidity'].getHumidity()
+                }    
+            })
 
-        handle['last_count'] = (handle['encoder'].getPosition() - handle['last_count'])/1200
-        data.append({
-            'asset': '{}{}'.format(handle['assetPrefix']['value'], handle['encoderAssetName']['value']),
-            'timestamp': time_stamp,
-            'key': str(uuid.uuid4()),
-            'readings': {
-                "encoder": handle['last_count'] # number of reps
-            }
-        })
+        if (handle['currentEnable']['value'] == 'true' and handle['currentCount'] == 0): 
+            data.append({
+                'asset': '{}{}'.format(handle['assetPrefix']['value'], handle['currentAssetName']['value']),
+                'timestamp': time_stamp,
+                'key': str(uuid.uuid4()),
+                'readings': {
+                    "current": handle['current'].getCurrent()
+                }
+            })
 
-        x, y, z = handle['acceleration'].getAcceleration()
-        data.append({
-            'asset': '{}{}/{}'.format(handle['assetPrefix']['value'], handle['spatialAssetName']['value'], 'acceleration'),
-            'timestamp': time_stamp,
-            'key': str(uuid.uuid4()),
-            'readings': {
-                "acceleration-x": x,
-                "acceleration-y": y, 
-                "acceleration-z": z
-            }
-        })
+        if (handle['encoderEnable']['value'] == 'true' and handle['encoderCount'] == 0):
+            value = handle['encoder'].getPosition()
+            data.append({
+                'asset': '{}{}'.format(handle['assetPrefix']['value'], handle['encoderAssetName']['value']),
+                'timestamp': time_stamp,
+                'key': str(uuid.uuid4()),
+                'readings': {
+                    "encoder": (value - handle['encoderPreviousValue'])/1200
+                }
+            })
+            handle['encoderPreviousValue'] = value 
 
-        x, y, z = handle['gyroscope'].getAngularRate()
-        data.append({
-            'asset': '{}{}/{}'.format(handle['assetPrefix']['value'], handle['spatialAssetName']['value'], 'gyroscope'),
-            'timestamp': time_stamp,
-            'key': str(uuid.uuid4()),
-            'readings': {
-                "gyroscope-x": x,
-                "gyroscope-y": y,
-                "gyroscope-z": z
-            }
-        })
+        if (handle['accelerometerEnable']['value'] == 'true' and handle['accelerometerCount'] == 0):
+            x, y, z = handle['accelerometer'].getAcceleration()
+            data.append({
+                'asset': '{}{}/{}'.format(handle['assetPrefix']['value'], handle['spatialAssetName']['value'], 'accelerometer'),
+                'timestamp': time_stamp,
+                'key': str(uuid.uuid4()),
+                'readings': {
+                    "accelerometer-x": x,
+                    "accelerometer-y": y, 
+                    "accelerometer-z": z
+                }
+            })
 
-        x, y, z = handle['magnetometer'].getMagneticField()
-        data.append({
-            'asset': '{}{}/{}'.format(handle['assetPrefix']['value'], handle['spatialAssetName']['value'], 'magnetometer'),
-            'timestamp': time_stamp,
-            'key': str(uuid.uuid4()),
-            'readings': {
-                "magnetometer-x": x,
-                "magnetometer-y": y,
-                "magnetometer-z": z
-            }
-        })
+        if (handle['gyroscopeEnable']['value'] == 'true' and handle['gyroscopeCount'] == 0): 
+            x, y, z = handle['gyroscope'].getAngularRate()
+            data.append({
+                'asset': '{}{}/{}'.format(handle['assetPrefix']['value'], handle['spatialAssetName']['value'], 'gyroscope'),
+                'timestamp': time_stamp,
+                'key': str(uuid.uuid4()),
+                'readings': {
+                    "gyroscope-x": x,
+                    "gyroscope-y": y,
+                    "gyroscope-z": z
+                }
+            })
 
-        # data['gyroscope'].getAngularRate()
-        # data['magnetometer'].getMagneticField()
+        if (handle['magnetometerEnable']['value'] == 'true' and handle['magnetometerCount'] == 0):
+            x, y, z = handle['magnetometer'].getMagneticField()
+            data.append({
+                'asset': '{}{}/{}'.format(handle['assetPrefix']['value'], handle['spatialAssetName']['value'], 'magnetometer'),
+                'timestamp': time_stamp,
+                'key': str(uuid.uuid4()),
+                'readings': {
+                    "magnetometer-x": x,
+                    "magnetometer-y": y,
+                    "magnetometer-z": z
+                }  
+            })
+
+        handle['tempHumCount'] = (handle['tempHumCount'] + 1) % int(handle['tempHumPoll']['value'])
+        handle['currentCount'] = (handle['currentCount'] + 1) % int(handle['currentPoll']['value']) 
+        handle['encoderCount'] = (handle['encoderCount'] + 1) % int(handle['encoderPoll']['value']) 
+        handle['accelerometerCount'] = (handle['accelerometerCount'] + 1) % int(handle['accelerometerPoll']['value'])
+        handle['gyroscopeCount'] = (handle['gyroscopeCount'] + 1) % int(handle['gyroscopePoll']['value'])
+        handle['magnetometerCount'] = (handle['magnetometerCount'] + 1) % int(handle['magnetometerPoll']['value'])
 
     except (Exception, RuntimeError) as ex:
         _LOGGER.exception("Phidget exception: {}".format(str(ex)))
@@ -446,6 +469,7 @@ def plugin_reconfigure(handle, new_config):
     """
     _LOGGER.info("Old config for Phidget plugin {} \n new config {}".format(handle, new_config))
     new_handle = copy.deepcopy(new_config)
+
     return new_handle
 
 
