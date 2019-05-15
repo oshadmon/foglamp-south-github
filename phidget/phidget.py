@@ -1,3 +1,10 @@
+"""
+The following is intended as the south-plugin of Dianomic's windbine demo of FogLAMP. The code uses the following Phidget based sensors: 
+    - Temperature & Humidity: HUM1000_0 (https://www.phidgets.com/?tier=3&catid=14&pcid=12&prodid=644)
+    - Spatial: MOT1101_0 (https://www.phidgets.com/?tier=3&catid=10&pcid=8&prodid=975)
+    - Rotary: 3531_0 (https://www.phidgets.com/?tier=3&catid=103&pcid=83&prodid=404)
+    - Current: VCP1100_0 (https://www.phidgets.com/?tier=3&catid=16&pcid=14&prodid=983)
+"""
 # -*- coding: utf-8 -*-
 
 # FOGLAMP_BEGIN
@@ -54,61 +61,145 @@ _DEFAULT_CONFIG = {
         'order': '2',
         'displayName': 'Asset Name Prefix'
     },
-    'tempHumPort': {
-        'description': 'VINT Hub port of temperature/humidity sensor',
-        'type': 'string',
-        'default': '0',
-        'order': '3',
-        'displayName': 'Humidity/Temperature Port'
-    },
     'tempHumAssetName': {
         'description': 'Humidity/Temperature sensor asset name',
         'type': 'string',
         'default': 'weather',
-        'order': '4',
+        'order': '3',
         'displayName': 'Humidity/Temperature Asset Name'
     },
-    'currentPort': {
-        'description': 'VINT Hub port of current sensor',
+    'tempHumPort': {
+        'description': 'VINT Hub port of temperature/humidity sensor',
         'type': 'string',
-        'default': '3',
-        'order': '5',
-        'displayName': 'Current Port'
+        'default': '0',
+        'order': '4',
+        'displayName': 'Humidity/Temperature Port'
+    },
+    'tempHumPoll': {
+        'description': 'Obtain Humidity/Temperature every nth time the plugin is pulled', 
+        'type': 'integer', 
+        'default': '1',
+        'order': '5', 
+        'displayName': 'Humidity/Temperature Poll', 
+    }, 
+    'tempHumEnable': {
+        'description': 'Enable Humidity/Temperature',
+        'type': 'boolean', 
+        'default': 'true', 
+        'order': '6', 
+        'displayName': 'Enable Humidity/Temperature'
     },
     'currentAssetName': {
         'description': 'Current sensor asset name',
         'type': 'string',
         'default': 'current',
-        'order': '6',
+        'order': '7',
         'displayName': 'Current Asset Name'
     },
-    'encoderPort': {
-        'description': 'VINT Hub port of encoder sensor',
+    'currentPort': {
+        'description': 'VINT Hub port of current sensor',
         'type': 'string',
-        'default': '1',
-        'order': '7',
-        'displayName': 'Encoder Port'
+        'default': '3',
+        'order': '8',
+        'displayName': 'Current Port'
+    },
+    'currentPoll': {
+        'description': 'Obtain current every nth time the plugin is pulled', 
+        'type': 'integer', 
+        'default': '1', 
+        'order': '9', 
+        'displayName': 'Current Poll'
+    },
+    'currentEnable': {
+        'description': 'Enable/Disable Current sensor', 
+        'type': 'boolean',
+        'default': 'true', 
+        'order': '10', 
+        'displayName': 'Enable Current'
     },
     'encoderAssetName': {
         'description': 'Encoder sensor asset name',
         'type': 'string',
         'default': 'encoder',
-        'order': '8',
+        'order': '11',
         'displayName': 'Encoder Asset Name'
     },
-    'spatialPort': {
-        'description': 'VINT Hub port of encoder sensor', 
-        'type': 'string', 
-        'default': '2', 
-        'order': '9', 
-        'displayName': 'Spatial Port'
+    'encoderPort': {
+        'description': 'VINT Hub port of encoder sensor',
+        'type': 'string',
+        'default': '1',
+        'order': '12',
+        'displayName': 'Encoder Port'
+    },
+    'encoderPoll': {
+        'description': 'Obtain encoder every nth time the plugin is pulled',
+        'type': 'integer',
+        'default': '1',
+        'order': '13',
+        'displayName': 'Encoder Poll'
+    },
+    'encoderEnable': {
+        'description': 'Enable Encoder Sensor',
+        'type': 'boolean',
+        'default': 'true',
+        'order': '14',
+        'displayName': 'Enable Encoder'
     },
     'spatialAssetName': {
-        'description': 'Spatial sensors asset name', 
+        'description': 'Spatial sensors asset name',
         'type': 'string',
-        'default': 'spatial', 
-        'order': '10', 
+        'default': 'spatial',
+        'order': '15',
         'displayName': 'Spatial asset name'
+    },
+    'spatialPort': {
+        'description': 'VINT Hub port of spatial sensors', 
+        'type': 'string', 
+        'default': '2', 
+        'order': '16', 
+        'displayName': 'Spatial Port'
+    },
+    'accelerationPoll': {
+        'description': 'Obtain acceleration every nth time the plugin is pulled',
+        'type': 'integer',
+        'default': '1',
+        'order': '17',
+        'displayName': 'Acceleration Poll'
+    },
+    'accelerationEnable': {
+        'description': 'Enable Acceleration Sensor',
+        'type': 'boolean',
+        'default': 'true',
+        'order': '18',
+        'displayName': 'Acceleration Encoder'
+    },
+    'gyroscopePoll': {
+        'description': 'Obtain gyroscope every nth time the plugin is pulled',
+        'type': 'integer',
+        'default': '1',
+        'order': '19',
+        'displayName': 'Gyroscope Poll'
+    },
+    'gyroscopeEnable': {
+        'description': 'Enable Gyroscope Sensor',
+        'type': 'boolean',
+        'default': 'true',
+        'order': '20',
+        'displayName': 'Enable Gyroscope'
+    },
+    'magnetometerPoll': {
+        'description': 'Obtain magnetometer every nth time the plugin is pulled',
+        'type': 'integer',
+        'default': '1',
+        'order': '21',
+        'displayName': 'Magnetometer Poll'
+    },
+    'magnetometerEnable': {
+        'description': 'Enable Magnetometer Sensor',
+        'type': 'boolean',
+        'default': 'true',
+        'order': '22',
+        'displayName': 'Enable Magnetometer'
     }
 }
 
