@@ -34,7 +34,7 @@ from Phidget22.PhidgetException import *
 from Phidget22.Phidget import *
 
 
-__author__ = "Ashwin Gopalakrishnan"
+__author__ = "Ori Shadmon" 
 __copyright__ = "Copyright (c) 2019 Dianomic Systems"
 __license__ = "Apache 2.0"
 __version__ = "${VERSION}"
@@ -232,110 +232,109 @@ def plugin_init(config):
     """
     try: 
         data = copy.deepcopy(config)
-        data['humidity'] = HumiditySensor()
-        data['temperature'] = TemperatureSensor()
-        data['current'] = CurrentInput() 
-        data['encoder'] = Encoder()
-        data['accelerometer'] = Accelerometer()
-        data['gyroscope'] = Gyroscope() 
-        data['magnetometer'] = Magnetometer()
-        data['last_count'] = 0
-
-        data['humidity'].setDeviceSerialNumber(int(data['hubSN']['value']))
-        data['humidity'].setHubPort(int(data['tempHumPort']['value']))
-        data['humidity'].setIsHubPortDevice(False)
-        data['humidity'].setChannel(0)
-
-        data['temperature'].setDeviceSerialNumber(int(data['hubSN']['value']))
-        data['temperature'].setHubPort(int(data['tempHumPort']['value']))
-        data['temperature'].setIsHubPortDevice(False)
-        data['temperature'].setChannel(0)
-
-        data['current'].setDeviceSerialNumber(int(data['hubSN']['value']))
-        data['current'].setHubPort(int(data['currentPort']['value']))
-        data['current'].setIsHubPortDevice(False)
-        data['current'].setChannel(0)
-
-        data['encoder'].setDeviceSerialNumber(int(data['hubSN']['value']))
-        data['encoder'].setHubPort(int(data['encoderPort']['value']))
-        data['encoder'].setIsHubPortDevice(False)
-        data['encoder'].setChannel(0)
-
-        data['accelerometer'].setDeviceSerialNumber(int(data['hubSN']['value']))
-        data['accelerometer'].setHubPort(int(data['spatialPort']['value']))
-        data['accelerometer'].setIsHubPortDevice(False)
-        data['accelerometer'].setChannel(0)
-
-        data['gyroscope'].setDeviceSerialNumber(int(data['hubSN']['value']))
-        data['gyroscope'].setHubPort(int(data['spatialPort']['value']))
-        data['gyroscope'].setIsHubPortDevice(False)
-        data['gyroscope'].setChannel(0)
-
-        data['magnetometer'].setDeviceSerialNumber(int(data['hubSN']['value']))
-        data['magnetometer'].setHubPort(int(data['spatialPort']['value']))
-        data['magnetometer'].setIsHubPortDevice(False)
-        data['magnetometer'].setChannel(0)
-
-        data['humidity'].openWaitForAttachment(5000)
-        data['temperature'].openWaitForAttachment(5000)
-        data['current'].openWaitForAttachment(5000)
-        data['encoder'].openWaitForAttachment(5000)
-        data['accelerometer'].openWaitForAttachment(5000)
-        data['gyroscope'].openWaitForAttachment(5000)
-        data['magnetometer'].openWaitForAttachment(5000)
-
-        try:
-            data['humidity'].getHumidity()
-        except Exception as e:
-            pass
-        try:
-            data['temperature'].getTemperature()
-        except Exception as e:
-            pass
-        try:
-            data['current'].getCurrent()
-        except Exception as e: 
-            pass 
-
-        i = 0 
-        while i < 120:
+        if data['tempHumEnable']['value'] == 'true':
+            data['humidity'] = HumiditySensor()
+            data['humidity'].setDeviceSerialNumber(int(data['hubSN']['value']))
+            data['humidity'].setHubPort(int(data['tempHumPort']['value']))
+            data['humidity'].setIsHubPortDevice(False)
+            data['humidity'].setChannel(0)
+            data['humidity'].openWaitForAttachment(5000)
             try:
-                data['encoder'].getPosition()
+                data['humidity'].getHumidity()
             except Exception as e:
-                time.sleep(1)
-                i+=1 
-            else: 
-                break 
+                pass
 
-        i = 0
-        while i < 120:
-            try: 
-                data['accelerometer'].getAcceleration()
-            except Exception as e:
-                time.sleep(1)
-                i+=1
-            else:
-                break
-
-        i = 0
-        while i < 120:
+            data['temperature'] = TemperatureSensor()  
+            data['temperature'].setDeviceSerialNumber(int(data['hubSN']['value']))
+            data['temperature'].setHubPort(int(data['tempHumPort']['value']))
+            data['temperature'].setIsHubPortDevice(False)
+            data['temperature'].setChannel(0)
+            data['temperature'].openWaitForAttachment(5000)
             try:
-                data['gyroscope'].getAngularRate()
+                data['temperature'].getTemperature()
             except Exception as e:
-                time.sleep(1)
-                i+=1
-            else:
-                break
+                pass
 
-        i = 0 
-        while i < 120: 
-            try: 
-                data['magnetometer'].getMagneticField() 
-            except Exception as e: 
-                time.sleep(1)
-                i+=1
-            else: 
-               break 
+        if data['currentEnable']['value'] == 'true': 
+            data['current'] = CurrentInput() 
+            data['current'].setDeviceSerialNumber(int(data['hubSN']['value']))
+            data['current'].setHubPort(int(data['currentPort']['value']))
+            data['current'].setIsHubPortDevice(False)
+            data['current'].setChannel(0)
+            data['current'].openWaitForAttachment(5000)
+            try:
+                data['current'].getCurrent()
+            except Exception as e:
+                pass
+
+        if data['encoderEnable']['value'] == 'true': 
+            data['encoder'] = Encoder()
+            data['encoder'].setDeviceSerialNumber(int(data['hubSN']['value']))
+            data['encoder'].setHubPort(int(data['encoderPort']['value']))
+            data['encoder'].setIsHubPortDevice(False)
+            data['encoder'].setChannel(0)
+            data['encoder'].openWaitForAttachment(5000)
+            i = 0
+            while i < 120:
+                try:
+                    data['encoder'].getPosition()
+                except Exception as e:
+                    time.sleep(1)
+                    i+=1
+                else:
+                    break
+    
+        if data['accelerometerEnable']['value'] == 'true': 
+            data['accelerometer'] = Accelerometer()
+            data['accelerometer'].setDeviceSerialNumber(int(data['hubSN']['value']))
+            data['accelerometer'].setHubPort(int(data['spatialPort']['value']))
+            data['accelerometer'].setIsHubPortDevice(False)
+            data['accelerometer'].setChannel(0)
+            data['accelerometer'].openWaitForAttachment(5000)
+            data['accelerometer'].setDataInterval(20)
+            i = 0
+            while i < 120:
+                try:
+                    data['accelerometer'].getAcceleration()
+                except Exception as e:
+                    time.sleep(1)
+                    i+=1
+                else:
+                    break
+
+        if data['gyroscopeEnable']['value'] == 'true': 
+            data['gyroscope'] = Gyroscope()
+            data['gyroscope'].setDeviceSerialNumber(int(data['hubSN']['value']))
+            data['gyroscope'].setHubPort(int(data['spatialPort']['value']))
+            data['gyroscope'].setIsHubPortDevice(False)
+            data['gyroscope'].setChannel(0)
+            data['gyroscope'].openWaitForAttachment(5000)
+            i = 0
+            while i < 120:
+                try:
+                    data['gyroscope'].getAngularRate()
+                except Exception as e:
+                    time.sleep(1)
+                    i+=1
+                else:
+                    break
+
+        if data['magnetometerEnable']['value'] == 'true': 
+            data['magnetometer'] = Magnetometer()
+            data['magnetometer'].setDeviceSerialNumber(int(data['hubSN']['value']))
+            data['magnetometer'].setHubPort(int(data['spatialPort']['value']))
+            data['magnetometer'].setIsHubPortDevice(False)
+            data['magnetometer'].setChannel(0)
+            data['magnetometer'].openWaitForAttachment(5000)
+            i = 0 
+            while i < 120: 
+                try: 
+                    data['magnetometer'].getMagneticField() 
+                except Exception as e: 
+                    time.sleep(1)
+                    i+=1
+                else: 
+                    break 
 
     except Exception as ex:
         _LOGGER.exception("Phidget exception: {}".format(str(ex)))
@@ -468,7 +467,148 @@ def plugin_reconfigure(handle, new_config):
         new_handle: new handle to be used in the future calls
     """
     _LOGGER.info("Old config for Phidget plugin {} \n new config {}".format(handle, new_config))
+    # Shutdown sensors 
+    try: 
+        handle['humidity'].close() 
+        handle['temperature'].close()
+        handle['current'].close() 
+        handle['encoder'].close() 
+        handle['accelerometer'].close()  
+        handle['gyroscope'].close() 
+        handle['magnetometer'].close() 
+    except Exception as ex:
+        _LOGGER.exception("Phidget exception: {}".format(str(ex)))
+        raise ex
+    time.sleep(5) 
     new_handle = copy.deepcopy(new_config)
+    try: 
+        # check if temp/humidity sensor is enabled. If so restart it 
+        if new_handle['tempHumEnable']['value'] == 'true': 
+            new_handle['humidity'] = HumiditySensor()
+            new_handle['humidity'].setDeviceSerialNumber(int(new_handle['hubSN']['value']))
+            new_handle['humidity'].setHubPort(int(new_handle['tempHumPort']['value']))
+            new_handle['humidity'].setIsHubPortDevice(False)
+            new_handle['humidity'].setChannel(0)
+            new_handle['humidity'].openWaitForAttachment(5000)
+            try:
+                new_handle['humidity'].getHumidity()
+            except Exception as e:
+                pass
+
+            new_handle['temperature'] = TemperatureSensor()
+            new_handle['temperature'].setDeviceSerialNumber(int(new_handle['hubSN']['value']))
+            new_handle['temperature'].setHubPort(int(new_handle['tempHumPort']['value']))
+            new_handle['temperature'].setIsHubPortDevice(False)
+            new_handle['temperature'].setChannel(0)
+            new_handle['temperature'].openWaitForAttachment(5000)
+            try:
+                new_handle['temperature'].getTemperature()
+            except Exception as e:
+                pass
+
+        # check if current sensor is enabled, if so restart it 
+        if new_handle['currentEnable']['value'] == 'true':
+            new_handle['current'] = CurrentInput()
+            new_handle['current'].setDeviceSerialNumber(int(new_handle['hubSN']['value']))
+            new_handle['current'].setHubPort(int(new_handle['currentPort']['value']))
+            new_handle['current'].setIsHubPortDevice(False)
+            new_handle['current'].setChannel(0)
+            new_handle['current'].openWaitForAttachment(5000)
+            try:
+                new_handle['current'].getCurrent()
+            except Exception as e:
+                pass
+
+        # check if encoder sensor is enabled  
+        if new_handle['encoderEnable']['value'] == 'true':
+            new_handle['encoder'] = Encoder()
+            new_handle['encoder'].setDeviceSerialNumber(int(new_handle['hubSN']['value']))
+            new_handle['encoder'].setHubPort(int(new_handle['encoderPort']['value']))
+            new_handle['encoder'].setIsHubPortDevice(False)
+            new_handle['encoder'].setChannel(0)
+            new_handle['encoder'].openWaitForAttachment(5000)
+            i = 0
+            while i < 120:
+                try:
+                    new_handle['encoder'].getPosition()
+                except Exception as e:
+                    time.sleep(1)
+                    i+=1
+                else:
+                    break
+
+        # check if accelerometer is enabled
+        if new_handle['accelerometerEnable']['value'] == 'true':
+            new_handle['accelerometer'] = Accelerometer()
+            new_handle['accelerometer'].setDeviceSerialNumber(int(new_handle['hubSN']['value']))
+            new_handle['accelerometer'].setHubPort(int(new_handle['spatialPort']['value']))
+            new_handle['accelerometer'].setIsHubPortDevice(False)
+            new_handle['accelerometer'].setChannel(0)
+            new_handle['accelerometer'].openWaitForAttachment(5000)
+            new_handle['accelerometer'].setDataInterval(20)
+            i = 0
+            while i < 120:
+                try:
+                    new_handle['accelerometer'].getAcceleration()
+                except Exception as e:
+                    time.sleep(1)
+                    i+=1
+                else:
+                    break
+        # check if gyroscope is enabled 
+        if new_handle['gyroscopeEnable']['value'] == 'true':
+            new_handle['gyroscope'] = Gyroscope()
+            new_handle['gyroscope'].setDeviceSerialNumber(int(new_handle['hubSN']['value']))
+            new_handle['gyroscope'].setHubPort(int(new_handle['spatialPort']['value']))
+            new_handle['gyroscope'].setIsHubPortDevice(False)
+            new_handle['gyroscope'].setChannel(0)
+            new_handle['gyroscope'].openWaitForAttachment(5000)
+            i = 0
+            while i < 120:
+                try:
+                    new_handle['gyroscope'].getAngularRate()
+                except Exception as e:
+                    time.sleep(1)
+                    i+=1
+                else:
+                    break
+        # check if magnetometer enable is enabled 
+        if new_handle['magnetometerEnable']['value'] == 'true':
+            new_handle['magnetometer'] = Magnetometer()
+            new_handle['magnetometer'].setDeviceSerialNumber(int(new_handle['hubSN']['value']))
+            new_handle['magnetometer'].setHubPort(int(new_handle['spatialPort']['value']))
+            new_handle['magnetometer'].setIsHubPortDevice(False)
+            new_handle['magnetometer'].setChannel(0)
+            new_handle['magnetometer'].openWaitForAttachment(5000)
+            i = 0
+            while i < 120:
+                try:
+                    new_handle['magnetometer'].getMagneticField()
+                except Exception as e:
+                    time.sleep(1)
+                    i+=1
+                else:
+                    break
+
+        # check if hub has changed, if so init restart 
+        if new_handle['hubSN']['value'] != handle['hubSN']['value']:
+            new_handle['restart'] = 'yes'
+        else:
+            new_handle['restart'] = 'no'
+    except Exception as ex:
+        _LOGGER.exception("Phidget exception: {}".format(str(ex)))
+        raise ex
+
+    # counter to know when to run process
+    new_handle['tempHumCount'] = 0
+    new_handle['currentCount'] = 0
+    new_handle['encoderCount'] = 0
+    new_handle['accelerometerCount'] = 0
+    new_handle['gyroscopeCount'] = 0
+    new_handle['magnetometerCount'] = 0
+
+    # counter of last encoder value
+    new_handle['encoderPreviousValue'] = handle['encoderPreviousValue']
 
     return new_handle
 
@@ -481,5 +621,16 @@ def plugin_shutdown(handle):
     Returns:
         plugin shutdown
     """
+    try:
+        handle['humidity'].close()
+        handle['temperature'].close()
+        handle['current'].close()
+        handle['encoder'].close()
+        handle['accelerometer'].close()
+        handle['gyroscope'].close()
+        handle['magnetometer'].close()
+    except Exception as ex:
+        _LOGGER.exception("Phidget exception: {}".format(str(ex)))
+        raise ex
     _LOGGER.info('Phidget plugin shut down.')
 
