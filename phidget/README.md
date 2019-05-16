@@ -2,6 +2,7 @@
 * [System](https://www.phidgets.com/docs/OS_-_Linux#Quick_Downloads)
 ``` 
 cd 
+sudo apt-get install build-essential
 sudo apt-get install libusb-1.0-0-dev
 wget https://www.phidgets.com/downloads/phidget22/libraries/linux/libphidget22.tar.gz 
 untar -xzvf ~/libphidget22.tar.gz
