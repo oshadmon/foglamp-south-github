@@ -367,7 +367,7 @@ def plugin_init(config):
 
     # counter of last encoder value 
     data['encoderPreviousValue'] = 0 
-    data['encoderPreviousTime'] = utils.local_timestamp() 
+    data['encoderPreviousTime'] = 0   
     return data
 
 
@@ -386,6 +386,7 @@ def plugin_poll(handle):
     # we scale is to a value between 0 and 1023
     try:
         time_stamp = utils.local_timestamp()
+        now_time = time.time() 
         data = list()
         if (handle['tempHumEnable']['value'] == 'true' and handle['tempHumCount'] == 0): 
             data.append({
@@ -416,11 +417,12 @@ def plugin_poll(handle):
                     'timestamp': time_stamp,
                     'key': str(uuid.uuid4()),
                     'readings': {
-                        "encoder": ((value - handle['encoderPreviousValue'])/1200) 
+                        # (current_total_iterations - previous_total_iterations)/1200) / (elapsed time) 
+                        "encoder": ((value - handle['encoderPreviousValue'])/1200)/(now_time - handle['encoderPreviousTime'])
                     }
                 })
             handle['encoderPreviousValue'] = value 
-            handle['encoderPreviousTime'] = time_stamp 
+            handle['encoderPreviousTime'] = now_time
 
         if (handle['accelerometerEnable']['value'] == 'true' and handle['accelerometerCount'] == 0):
             x, y, z = handle['accelerometer'].getAcceleration()
