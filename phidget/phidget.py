@@ -14,6 +14,7 @@ The following is intended as the south-plugin of Dianomic's windbine demo of Fog
 """ Module for Phidget poll mode plugin """
 
 import copy
+import datetime
 import logging
 import math
 import time 
@@ -38,7 +39,6 @@ __author__ = "Ori Shadmon"
 __copyright__ = "Copyright (c) 2019 Dianomic Systems"
 __license__ = "Apache 2.0"
 __version__ = "${VERSION}"
-
 
 _DEFAULT_CONFIG = {
     'plugin': {
@@ -145,19 +145,19 @@ _DEFAULT_CONFIG = {
         'order': '14',
         'displayName': 'Enable Encoder'
     },
-    'spatialAssetName': {
-        'description': 'Spatial sensors asset name',
-        'type': 'string',
-        'default': 'spatial',
-        'order': '15',
-        'displayName': 'Spatial asset name'
-    },
-    'spatialPort': {
+   'spatialPort': {
         'description': 'VINT Hub port of spatial sensors', 
         'type': 'string', 
         'default': '2', 
-        'order': '16', 
+        'order': '15', 
         'displayName': 'Spatial Port'
+    },
+    'accelerometerAssetName': {
+        'description': 'accelerometer sensor asset name',
+        'type': 'string',
+        'default': 'accelerometer',
+        'order': '16',
+        'displayName': 'accelerometer Asset Name'
     },
     'accelerometerPoll': {
         'description': 'Obtain accelerometer every nth time the plugin is pulled',
@@ -173,32 +173,46 @@ _DEFAULT_CONFIG = {
         'order': '18',
         'displayName': 'Acceleration Encoder'
     },
+    'gyroscopeAssetName': {
+        'description': 'gyroscope sensor asset name',
+        'type': 'string',
+        'default': 'gyroscope',
+        'order': '19',
+        'displayName': 'gyroscope Asset Name'
+    },
     'gyroscopePoll': {
         'description': 'Obtain gyroscope every nth time the plugin is pulled',
         'type': 'integer',
         'default': '1',
-        'order': '19',
+        'order': '20',
         'displayName': 'Gyroscope Poll'
     },
     'gyroscopeEnable': {
         'description': 'Enable Gyroscope Sensor',
         'type': 'boolean',
         'default': 'true',
-        'order': '20',
+        'order': '21',
         'displayName': 'Enable Gyroscope'
+    },
+    'magnetometerAssetName': {
+        'description': 'magnetometer sensor asset name',
+        'type': 'string',
+        'default': 'magnetometer',
+        'order': '22',
+        'displayName': 'magnetometer Asset Name'
     },
     'magnetometerPoll': {
         'description': 'Obtain magnetometer every nth time the plugin is pulled',
         'type': 'integer',
         'default': '1',
-        'order': '21',
+        'order': '23',
         'displayName': 'Magnetometer Poll'
     },
     'magnetometerEnable': {
         'description': 'Enable Magnetometer Sensor',
         'type': 'boolean',
         'default': 'true',
-        'order': '22',
+        'order': '24',
         'displayName': 'Enable Magnetometer'
     }
 }
@@ -274,6 +288,7 @@ def plugin_init(config):
             data['encoder'].setIsHubPortDevice(False)
             data['encoder'].setChannel(0)
             data['encoder'].openWaitForAttachment(5000)
+            data['encoder'].setDataInterval(20)
             i = 0
             while i < 120:
                 try:
@@ -309,6 +324,7 @@ def plugin_init(config):
             data['gyroscope'].setIsHubPortDevice(False)
             data['gyroscope'].setChannel(0)
             data['gyroscope'].openWaitForAttachment(5000)
+            data['gyroscope'].setDataInterval(20)
             i = 0
             while i < 120:
                 try:
@@ -326,6 +342,7 @@ def plugin_init(config):
             data['magnetometer'].setIsHubPortDevice(False)
             data['magnetometer'].setChannel(0)
             data['magnetometer'].openWaitForAttachment(5000)
+            data['magnetometer'].setDataInterval(20)
             i = 0 
             while i < 120: 
                 try: 
@@ -350,7 +367,7 @@ def plugin_init(config):
 
     # counter of last encoder value 
     data['encoderPreviousValue'] = 0 
-
+    data['encoderPreviousTime'] = utils.local_timestamp() 
     return data
 
 
@@ -367,7 +384,6 @@ def plugin_poll(handle):
     """
     # air quality is votlage reading between 0 and 5.1
     # we scale is to a value between 0 and 1023
-    air_quality_scalar = 200.58
     try:
         time_stamp = utils.local_timestamp()
         data = list()
@@ -394,20 +410,22 @@ def plugin_poll(handle):
 
         if (handle['encoderEnable']['value'] == 'true' and handle['encoderCount'] == 0):
             value = handle['encoder'].getPosition()
-            data.append({
-                'asset': '{}{}'.format(handle['assetPrefix']['value'], handle['encoderAssetName']['value']),
-                'timestamp': time_stamp,
-                'key': str(uuid.uuid4()),
-                'readings': {
-                    "encoder": (value - handle['encoderPreviousValue'])/1200
-                }
-            })
+            if handle['encoderPreviousValue'] > 0: # ommit first one
+               data.append({
+                    'asset': '{}{}'.format(handle['assetPrefix']['value'], handle['encoderAssetName']['value']),
+                    'timestamp': time_stamp,
+                    'key': str(uuid.uuid4()),
+                    'readings': {
+                        "encoder": ((value - handle['encoderPreviousValue'])/1200) 
+                    }
+                })
             handle['encoderPreviousValue'] = value 
+            handle['encoderPreviousTime'] = time_stamp 
 
         if (handle['accelerometerEnable']['value'] == 'true' and handle['accelerometerCount'] == 0):
             x, y, z = handle['accelerometer'].getAcceleration()
             data.append({
-                'asset': '{}{}/{}'.format(handle['assetPrefix']['value'], handle['spatialAssetName']['value'], 'accelerometer'),
+                'asset': '{}{}'.format(handle['assetPrefix']['value'], handle['accelerometerAssetName']['value']),
                 'timestamp': time_stamp,
                 'key': str(uuid.uuid4()),
                 'readings': {
@@ -420,7 +438,7 @@ def plugin_poll(handle):
         if (handle['gyroscopeEnable']['value'] == 'true' and handle['gyroscopeCount'] == 0): 
             x, y, z = handle['gyroscope'].getAngularRate()
             data.append({
-                'asset': '{}{}/{}'.format(handle['assetPrefix']['value'], handle['spatialAssetName']['value'], 'gyroscope'),
+                'asset': '{}{}'.format(handle['assetPrefix']['value'], handle['gyroscopeAssetName']['value']),
                 'timestamp': time_stamp,
                 'key': str(uuid.uuid4()),
                 'readings': {
@@ -433,7 +451,7 @@ def plugin_poll(handle):
         if (handle['magnetometerEnable']['value'] == 'true' and handle['magnetometerCount'] == 0):
             x, y, z = handle['magnetometer'].getMagneticField()
             data.append({
-                'asset': '{}{}/{}'.format(handle['assetPrefix']['value'], handle['spatialAssetName']['value'], 'magnetometer'),
+                'asset': '{}{}'.format(handle['assetPrefix']['value'], handle['magnetometerAssetName']['value']),
                 'timestamp': time_stamp,
                 'key': str(uuid.uuid4()),
                 'readings': {
@@ -527,6 +545,7 @@ def plugin_reconfigure(handle, new_config):
             new_handle['encoder'].setIsHubPortDevice(False)
             new_handle['encoder'].setChannel(0)
             new_handle['encoder'].openWaitForAttachment(5000)
+            new_handle['encoder'].setDataInterval(20)
             i = 0
             while i < 120:
                 try:
@@ -563,6 +582,7 @@ def plugin_reconfigure(handle, new_config):
             new_handle['gyroscope'].setIsHubPortDevice(False)
             new_handle['gyroscope'].setChannel(0)
             new_handle['gyroscope'].openWaitForAttachment(5000)
+            new_handle['gyroscope'].setDataInterval(20)
             i = 0
             while i < 120:
                 try:
@@ -580,6 +600,7 @@ def plugin_reconfigure(handle, new_config):
             new_handle['magnetometer'].setIsHubPortDevice(False)
             new_handle['magnetometer'].setChannel(0)
             new_handle['magnetometer'].openWaitForAttachment(5000)
+            new_handle['magnetometer'].setDataInterval(20)
             i = 0
             while i < 120:
                 try:
