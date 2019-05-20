@@ -386,7 +386,6 @@ def plugin_poll(handle):
     # we scale is to a value between 0 and 1023
     try:
         time_stamp = utils.local_timestamp()
-        now_time = time.time() 
         data = list()
         if (handle['tempHumEnable']['value'] == 'true' and handle['tempHumCount'] == 0): 
             data.append({
@@ -412,17 +411,29 @@ def plugin_poll(handle):
         if (handle['encoderEnable']['value'] == 'true' and handle['encoderCount'] == 0):
             value = handle['encoder'].getPosition()
             if handle['encoderPreviousValue'] > 0: # ommit first one
+               # convert to datetime type 
+               if ":" == time_stamp[-3:-2]: 
+                   timestamp_new = datetime.datetime.strptime(time_stamp[:-3]+time_stamp[-2:], '%Y-%m-%d %H:%M:%S.%f%z') 
+               
+               if ":" == handle['encoderPreviousTime'][-3:-2]: 
+                   timestamp_old = datetime.datetime.strptime(handle['encoderPreviousTime'][:-3]+handle['encoderPreviousTime'][-2:], '%Y-%m-%d %H:%M:%S.%f%z')
+               
+               # calculate elapse time in milliseconds 
+               elapse_time = timestamp_new - timestamp_old 
+               elapse_time = elapse_time.total_seconds() 
+
                data.append({
                     'asset': '{}{}'.format(handle['assetPrefix']['value'], handle['encoderAssetName']['value']),
                     'timestamp': time_stamp,
                     'key': str(uuid.uuid4()),
                     'readings': {
-                        # (current_total_iterations - previous_total_iterations)/1200) / (elapsed time) 
-                        "encoder": ((value - handle['encoderPreviousValue'])/1200)/(now_time - handle['encoderPreviousTime'])
+                        # (current_total_iterations - previous_total_iterations)/1200) / (elapsed time in milliseconds) 
+                        "rotation-since-last-call": (value - handle['encoderPreviousValue'])/1200,
+                        "rotation-per-second":  (value - handle['encoderPreviousValue'])/elapse_time
                     }
                 })
             handle['encoderPreviousValue'] = value 
-            handle['encoderPreviousTime'] = now_time
+            handle['encoderPreviousTime'] = time_stamp
 
         if (handle['accelerometerEnable']['value'] == 'true' and handle['accelerometerCount'] == 0):
             x, y, z = handle['accelerometer'].getAcceleration()
